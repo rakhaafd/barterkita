@@ -1,8 +1,17 @@
-@import "tailwindcss"
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Kaushan+Script&display=swap');
+@import "tailwindcss";
 
 :root {
   --color-primary: #0b4e65;
   --color-secondary: #fbc13a;
   --color-white: #fffcfc;
   --color-black: #2a2b2a;
+}
+
+* {
+  font-family: "DM Sans";
+}
+
+h1, h2 {
+  font-family: "Kaushan Script";
 }

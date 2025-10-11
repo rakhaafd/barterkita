@@ -9,9 +9,9 @@ import Profile from "./Pages/Profile.jsx";
 import Login from "./Pages/Login.jsx";
 import Register from "./Pages/Register.jsx";
 import Marketplace from "./Pages/Marketplace.jsx";
-
+import DashboardUser from "./Pages/DashboardUser.jsx";
 // Admin Pages
-import Dashboard from "./Pages/Admin/Dashboard.jsx";
+import DashboardAdmin from "./Pages/Admin/DashboardAdmin.jsx";
 import AdminLogin from "./Pages/Admin/Login.jsx";
 import User from "./Pages/Admin/User.jsx";
 
@@ -20,10 +20,12 @@ createRoot(document.getElementById("root")).render(
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Home />} />
-        {/* <Route path="/profile" element={<Profile />} />
+        <Route path="/profile" element={<Profile />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/marketplace" element={<Marketplace />} /> */}
+        <Route path="/marketplace" element={<Marketplace />} />
+        <Route path="/dashboard" element={<DashboardUser />} />
+
 
         {/* Admin Nested */}
         {/* <Route path="/admin/dashboard" element={<Dashboard />} />

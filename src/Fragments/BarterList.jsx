@@ -219,7 +219,7 @@ export default function BarterList() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--color-white)] pl-16 md:pl-64 px-4 sm:px-6 md:px-8 lg:px-10 py-8">
+    <div className="min-h-screen bg-[var(--color-white)] pl-4 md:pl-12 px-4 sm:px-6 md:px-8 py-6 md:py-8">
       <h1 className="text-xl sm:text-2xl font-bold mb-6 text-[var(--color-black)] text-center sm:text-left">
         Daftar Barter Anda
       </h1>
@@ -251,9 +251,9 @@ export default function BarterList() {
           </button>
         ))}
       </div>
-      <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
         {loading ? (
-          <p className="text-gray-500 text-center py-8 animate-pulse">
+          <p className="text-gray-500 text-center py-8 animate-pulse col-span-full">
             Memuat data barter...
           </p>
         ) : filteredData.length > 0 ? (
@@ -273,7 +273,7 @@ export default function BarterList() {
             />
           ))
         ) : (
-          <p className="text-gray-500 text-center py-8">
+          <p className="text-gray-500 text-center py-8 col-span-full">
             Belum ada tawaran di kategori ini.
           </p>
         )}

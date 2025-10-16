@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiSend, FiArrowLeft, FiMessageSquare, FiCheckCircle } from "react-icons/fi";
+import { FiSend, FiArrowLeft, FiMessageSquare, FiCheckCircle, FiUser, FiMenu, FiX } from "react-icons/fi";
 import { db, auth } from "../firebase/firebase-config";
 import {
   collection,
@@ -21,6 +21,7 @@ import {
 } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import Sidebar from "../Elements/Sidebar";
+import Button from "../Elements/Button";
 import { showSuccess, showError, showConfirmation } from "../Elements/Alert";
 
 export default function Chat() {
@@ -34,7 +35,10 @@ export default function Chat() {
   const [activeTab, setActiveTab] = useState("chat");
   const [agreements, setAgreements] = useState({});
   const [otherUserName, setOtherUserName] = useState("Unknown");
+  const [otherUserAvatar, setOtherUserAvatar] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [hasAgreed, setHasAgreed] = useState(false);
   const messagesEndRef = useRef(null);
 
   // Monitor user login
@@ -57,7 +61,7 @@ export default function Chat() {
     }
   }, [taskId, userId, navigate]);
 
-  // Fetch other user's name
+  // Fetch other user's name and avatar
   useEffect(() => {
     if (!userId) return;
     const fetchOtherUser = async () => {
@@ -65,7 +69,9 @@ export default function Chat() {
         const userRef = doc(db, "users", userId);
         const userSnap = await getDoc(userRef);
         if (userSnap.exists()) {
-          setOtherUserName(userSnap.data().name || userSnap.data().email || "Unknown");
+          const userData = userSnap.data();
+          setOtherUserName(userData.institution || userData.email || "Unknown");
+          setOtherUserAvatar(userData.avatar);
         } else {
           console.warn("User not found:", userId);
         }
@@ -99,9 +105,9 @@ export default function Chat() {
               const otherUserId = user1Id === currentUser.uid ? user2Id : user1Id;
               const userRef = doc(db, "users", otherUserId);
               const userSnap = await getDoc(userRef);
-              const userName = userSnap.exists()
-                ? userSnap.data().name || userSnap.data().email || "Unknown"
-                : "Unknown";
+              const userData = userSnap.exists() ? userSnap.data() : null;
+              const userName = userData?.institution || userData?.email || "Unknown";
+              const userAvatar = userData?.avatar;
               const taskRef = doc(db, "barterTasks", taskId);
               const taskSnap = await getDoc(taskRef);
               const taskTitle = taskSnap.exists()
@@ -119,6 +125,7 @@ export default function Chat() {
                 taskId,
                 otherUserId,
                 userName,
+                userAvatar,
                 taskTitle,
                 latestMessage,
                 key: `${chatId}_${index}`,
@@ -140,9 +147,9 @@ export default function Chat() {
             if (chatSnap.exists()) return null;
             const userRef = doc(db, "users", offer.offererId);
             const userSnap = await getDoc(userRef);
-            const userName = userSnap.exists()
-              ? userSnap.data().name || userSnap.data().email || "Unknown"
-              : "Unknown";
+            const userData = userSnap.exists() ? userSnap.data() : null;
+            const userName = userData?.institution || userData?.email || "Unknown";
+            const userAvatar = userData?.avatar;
             const taskRef = doc(db, "barterTasks", offer.taskId);
             const taskSnap = await getDoc(taskRef);
             const taskTitle = taskSnap.exists()
@@ -153,6 +160,7 @@ export default function Chat() {
               taskId: offer.taskId,
               otherUserId: offer.offererId,
               userName,
+              userAvatar,
               taskTitle,
               latestMessage: "Tawaran masuk",
               key: `offer_${offerDoc.id}_${index}`,
@@ -190,31 +198,26 @@ export default function Chat() {
     fetchTask();
   }, [taskId]);
 
-  // Fetch messages and agreements in real-time, and handle deletion when both agree
+  // Fetch messages and agreements in real-time
   useEffect(() => {
     if (isLoading || !currentUser?.uid || !taskId || !userId) return;
-    
     console.log("Chat params:", { taskId, userId });
     const chatId = [currentUser.uid, userId, taskId].sort().join("_");
     console.log("Generated chatId:", chatId);
-    
     const chatRef = doc(db, "chats", chatId);
     const messagesCollectionRef = collection(db, `chats/${chatId}/messages`);
     const messagesQuery = query(messagesCollectionRef, orderBy("createdAt", "asc"));
-
     let unsubscribeMessages = () => {};
     let unsubscribeChat = () => {};
-
     try {
-      // Subscribe to messages
-      unsubscribeMessages = onSnapshot(messagesQuery, 
+      unsubscribeMessages = onSnapshot(messagesQuery,
         (snapshot) => {
           const messageList = snapshot.docs.map((doc) => ({
             id: doc.id,
             ...doc.data(),
           }));
           setMessages(messageList);
-        }, 
+        },
         (err) => {
           console.error("Gagal memuat pesan:", err.message, err.code);
           showError({
@@ -223,24 +226,22 @@ export default function Chat() {
           });
         }
       );
-
-      // Subscribe to chat document
-      unsubscribeChat = onSnapshot(chatRef, 
+      unsubscribeChat = onSnapshot(chatRef,
         async (docSnapshot) => {
           if (docSnapshot.exists()) {
             const data = docSnapshot.data();
             console.log("Chat data:", data);
-            setAgreements(data.agreements || {});
-            
+            const currentAgreements = data.agreements || {};
+            setAgreements(currentAgreements);
+            if (currentAgreements[currentUser.uid] === true) {
+              setHasAgreed(true);
+            }
             try {
               const taskRef = doc(db, "barterTasks", taskId);
               const taskSnap = await getDoc(taskRef);
-              
-              if (taskSnap.exists() && data.agreements?.[currentUser.uid] && data.agreements?.[userId]) {
-                // Check if both users have agreed
-                if (data.agreements[currentUser.uid] === true && data.agreements[userId] === true) {
+              if (taskSnap.exists() && currentAgreements[currentUser.uid] && currentAgreements[userId]) {
+                if (currentAgreements[currentUser.uid] === true && currentAgreements[userId] === true) {
                   try {
-                    // Delete offer from offers collection
                     const offersQuery = query(
                       collection(db, "offers"),
                       where("taskId", "==", taskId),
@@ -253,14 +254,10 @@ export default function Chat() {
                         console.log("Offer deleted:", offerDoc.id);
                       }
                     }
-                    // Delete task from barterTasks collection
                     await deleteDoc(taskRef);
                     console.log("Task deleted:", taskId);
-                    // Delete chat from chats collection
                     await deleteDoc(chatRef);
                     console.log("Chat deleted:", chatId);
-                    
-                    // Show success alert
                     showSuccess({
                       title: "Barter Selesai!",
                       text: "Tawaran, task, dan chat telah berhasil dihapus."
@@ -280,7 +277,7 @@ export default function Chat() {
               console.error("Error checking task:", taskErr);
             }
           }
-        }, 
+        },
         (err) => {
           console.error("Gagal memuat chat:", err.message, err.code);
           showError({
@@ -292,7 +289,6 @@ export default function Chat() {
     } catch (error) {
       console.error("Error setting up listeners:", error);
     }
-
     return () => {
       unsubscribeMessages();
       unsubscribeChat();
@@ -333,17 +329,14 @@ export default function Chat() {
 
   // Handle agreement to complete barter
   const handleAgreeToComplete = async () => {
-    if (!currentUser || !taskId || !userId) return;
-    
+    if (!currentUser || !taskId || !userId || hasAgreed) return;
     const result = await showConfirmation({
       title: "Konfirmasi Penyelesaian Barter",
-      text: "Apakah Anda yakin ingin menyetujui penyelesaian barter ini?",
+      text: "Apakah Anda yakin ingin menyetujui penyelesaian barter ini? Tindakan ini tidak dapat dibatalkan.",
       confirmButtonText: "Ya, Setuju",
       cancelButtonText: "Batal"
     });
-    
     if (!result.isConfirmed) return;
-    
     try {
       const chatId = [currentUser.uid, userId, taskId].sort().join("_");
       const chatRef = doc(db, "chats", chatId);
@@ -352,11 +345,20 @@ export default function Chat() {
         console.error("Chat not found:", chatId);
         throw new Error("Chat tidak ditemukan");
       }
-      let updatedAgreements = chatSnap.data().agreements || {};
+      const currentData = chatSnap.data();
+      if (currentData.agreements?.[currentUser.uid] === true) {
+        setHasAgreed(true);
+        showError({
+          title: "Sudah Disetujui",
+          text: "Anda sudah menyetujui penyelesaian barter ini."
+        });
+        return;
+      }
+      let updatedAgreements = currentData.agreements || {};
       updatedAgreements[currentUser.uid] = true;
       await updateDoc(chatRef, { agreements: updatedAgreements });
       console.log("Agreement recorded for user:", currentUser.uid, updatedAgreements);
-      
+      setHasAgreed(true);
       showSuccess({
         title: "Berhasil!",
         text: "Anda telah menyetujui penyelesaian barter. Menunggu persetujuan dari pengguna lain."
@@ -373,204 +375,295 @@ export default function Chat() {
   // Handle contact click
   const handleContactClick = (contact) => {
     navigate(`/chat/${contact.taskId}/${contact.otherUserId}`);
+    setSidebarOpen(false);
+  };
+
+  // Render avatar with fallback
+  const renderAvatar = (avatar, name, size = "w-10 h-10") => {
+    if (avatar) {
+      return (
+        <img
+          src={avatar}
+          alt={name}
+          className={`${size} rounded-full object-cover border-2 border-[var(--color-secondary)]`}
+        />
+      );
+    }
+    return (
+      <div className={`${size} rounded-full bg-[var(--color-primary)] flex items-center justify-center text-white font-bold border-2 border-[var(--color-secondary)]`}>
+        {name ? name.charAt(0).toUpperCase() : <FiUser />}
+      </div>
+    );
   };
 
   return (
-    <div className="flex min-h-screen bg-[var(--color-white)]">
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
-      <main className="flex-1 pl-16 md:pl-64 transition-all duration-300 p-4 sm:p-6 md:p-8">
-        {isLoading ? (
-          <div className="flex items-center justify-center h-full">
-            <p className="text-gray-500 text-sm sm:text-base">Memuat...</p>
+    <div className="flex min-h-screen bg-gradient-to-br from-[var(--color-white)] to-gray-50">
+      {/* Sidebar */}
+      <div className={`
+        fixed inset-y-0 left-0 z-50 transition-all duration-300
+        ${sidebarOpen ? 'w-64' : 'w-16'} lg:w-64
+      `}>
+        <Sidebar
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          onItemClick={() => setSidebarOpen(false)}
+          isOpen={sidebarOpen}
+        />
+      </div>
+      {/* Main Content */}
+      <main className={`flex-1 transition-all duration-300 min-w-0 ${sidebarOpen ? 'ml-64' : 'ml-16'} lg:ml-64`}>
+        <div className="p-4 sm:p-6 md:p-8 h-screen flex flex-col">
+          {/* Mobile Header */}
+          <div className="lg:hidden flex items-center justify-between mb-4">
+            <div className="w-10"></div>
+            <h1 className="text-lg font-bold text-[var(--color-primary)]">
+              {taskId && userId ? "Chat" : "Percakapan"}
+            </h1>
+            <div className="w-10"></div>
           </div>
-        ) : (
-          <AnimatePresence mode="wait">
-            {!taskId || !userId ? (
-              <motion.div
-                key="contact-list"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.3 }}
-              >
-                <h1 className="text-xl sm:text-2xl font-bold text-[var(--color-primary)] mb-6">
-                  Daftar Kontak
-                </h1>
-                <div className="space-y-4">
-                  {contacts.length === 0 ? (
-                    <p className="text-gray-500 text-center py-8 text-sm sm:text-base">
-                      Belum ada kontak atau tawaran masuk.
-                    </p>
-                  ) : (
-                    contacts.map((contact) => (
-                      <motion.div
-                        key={contact.key}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.3 }}
-                        onClick={() => handleContactClick(contact)}
-                        className="flex items-center gap-4 p-4 bg-white/80 backdrop-blur-md border border-[var(--color-secondary)]/30 rounded-2xl shadow-md hover:shadow-lg hover:bg-[var(--color-secondary)]/10 cursor-pointer transition-all duration-300"
-                      >
-                        <div className="flex-shrink-0 w-12 h-12 rounded-full bg-[var(--color-primary)] flex items-center justify-center text-white font-bold">
-                          {contact.userName[0]?.toUpperCase() || "?"}
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="text-base sm:text-lg font-semibold text-[var(--color-black)]">
-                            {contact.userName}
-                          </h3>
-                          <p className="text-sm text-gray-600">{contact.taskTitle}</p>
-                          <p className="text-sm text-gray-500 italic truncate">
-                            {contact.latestMessage}
-                          </p>
-                        </div>
-                        {contact.latestMessage === "Tawaran masuk" && (
-                          <span className="bg-[var(--color-secondary)] text-white text-xs rounded-full px-2 py-1">
-                            Baru
-                          </span>
-                        )}
-                      </motion.div>
-                    ))
-                  )}
-                </div>
-              </motion.div>
-            ) : (
-              <motion.div
-                key="chat-room"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                transition={{ duration: 0.3 }}
-              >
+          {isLoading ? (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center">
+                <div className="w-12 h-12 border-4 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                <p className="text-gray-500 text-sm sm:text-base">Memuat chat...</p>
+              </div>
+            </div>
+          ) : (
+            <AnimatePresence mode="wait">
+              {!taskId || !userId ? (
                 <motion.div
-                  initial={{ opacity: 0, y: -20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5 }}
-                  className="flex items-center justify-between mb-6 flex-col sm:flex-row gap-4 sm:gap-0"
+                  key="contact-list"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3 }}
+                  className="h-full flex flex-col"
                 >
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => navigate("/profile", { state: { activeTab: "barter" } })}
-                      className="text-[var(--color-primary)] hover:text-[var(--color-secondary)] transition text-xl sm:text-2xl"
-                    >
-                      <FiArrowLeft />
-                    </button>
-                    <h1 className="text-xl sm:text-2xl font-bold text-[var(--color-primary)]">
-                      Chat: {task?.title || "Loading..."}
+                  <div className="bg-white/80 backdrop-blur-md rounded-2xl shadow-lg p-4 sm:p-6 mb-4 sm:mb-6">
+                    <h1 className="text-lg sm:text-xl font-bold text-[var(--color-primary)] mb-2">
+                      💬 Percakapan Anda
                     </h1>
+                    <p className="text-gray-600 text-sm">
+                      Kelola semua percakapan barter Anda di satu tempat
+                    </p>
                   </div>
-                  <div className="text-sm sm:text-base text-[var(--color-black)] text-center sm:text-right">
-                    Dengan: {otherUserName}
-                  </div>
-                </motion.div>
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.5 }}
-                  className="bg-white/80 backdrop-blur-md border border-[var(--color-secondary)]/30 rounded-3xl shadow-2xl p-4 sm:p-6 h-[60vh] flex flex-col"
-                >
-                  <div className="flex-1 overflow-y-auto pr-2">
-                    <AnimatePresence>
-                      {messages.length === 0 ? (
-                        <motion.div
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          exit={{ opacity: 0 }}
-                          className="flex flex-col items-center justify-center h-full text-gray-500"
-                        >
-                          <FiMessageSquare className="text-3xl sm:text-4xl text-[var(--color-primary)] mb-2" />
-                          <p className="text-sm sm:text-base">Belum ada pesan. Mulai obrolan sekarang!</p>
-                        </motion.div>
-                      ) : (
-                        messages.map((message) => (
+                  <div className="flex-1 overflow-hidden">
+                    {contacts.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center h-full text-center py-8 sm:py-12">
+                        <FiMessageSquare className="text-3xl sm:text-4xl text-[var(--color-primary)] mb-3 sm:mb-4" />
+                        <h3 className="text-base sm:text-lg font-semibold text-gray-700 mb-2">
+                          Belum ada percakapan
+                        </h3>
+                        <p className="text-gray-500 text-xs sm:text-sm max-w-md px-4">
+                          Mulai barter dengan mengirim tawaran atau menunggu tawaran masuk dari pengguna lain.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 h-full overflow-y-auto pr-2">
+                        {contacts.map((contact) => (
                           <motion.div
-                            key={message.id}
-                            initial={{ opacity: 0, y: 20 }}
+                            key={contact.key}
+                            initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.3 }}
-                            className={`flex ${
-                              message.senderId === currentUser?.uid ? "justify-end" : "justify-start"
-                            } mb-4`}
+                            onClick={() => handleContactClick(contact)}
+                            className="bg-white/80 backdrop-blur-md border border-[var(--color-secondary)]/30 rounded-xl sm:rounded-2xl shadow-md hover:shadow-lg hover:bg-[var(--color-secondary)]/5 cursor-pointer transition-all duration-300 p-3 sm:p-4 group"
                           >
-                            <div
-                              className={`max-w-[70%] p-3 rounded-2xl text-sm sm:text-base ${
-                                message.senderId === currentUser?.uid
-                                  ? "bg-[var(--color-primary)] text-white"
-                                  : "bg-[var(--color-secondary)]/20 text-[var(--color-black)]"
-                              }`}
-                            >
-                              <p>{message.text}</p>
-                              <p className="text-xs opacity-70 mt-1">
-                                {message.createdAt?.toDate().toLocaleTimeString()}
-                              </p>
+                            <div className="flex items-start gap-3">
+                              {renderAvatar(contact.userAvatar, contact.userName, "w-8 h-8 sm:w-10 sm:h-10")}
+                              <div className="flex-1 min-w-0">
+                                <h3 className="font-semibold text-[var(--color-black)] text-xs sm:text-sm truncate group-hover:text-[var(--color-primary)] transition-colors">
+                                  {contact.userName}
+                                </h3>
+                                <p className="text-xs text-gray-600 mb-1 truncate">
+                                  {contact.taskTitle}
+                                </p>
+                                <p className="text-xs text-gray-500 italic truncate">
+                                  {contact.latestMessage}
+                                </p>
+                              </div>
                             </div>
+                            {contact.latestMessage === "Tawaran masuk" && (
+                              <div className="mt-2 sm:mt-3 flex justify-end">
+                                <span className="bg-[var(--color-secondary)] text-[var(--color-black)] text-xs font-medium px-2 py-1 rounded-full">
+                                  Tawaran Baru
+                                </span>
+                              </div>
+                            )}
                           </motion.div>
-                        ))
-                      )}
-                    </AnimatePresence>
-                    <div ref={messagesEndRef} />
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  {task && (
-                    <div className="mt-4 border-t border-gray-200 pt-4">
-                      <h3 className="text-base sm:text-lg font-semibold text-[var(--color-black)] mb-2">
-                        Status Penyelesaian Barter
-                      </h3>
-                      <div className="flex flex-col sm:flex-row gap-4 mb-4">
-                        <div className="flex items-center gap-2">
-                          <FiCheckCircle
-                            className={`text-lg ${
-                              agreements[currentUser?.uid] ? "text-green-500" : "text-gray-400"
-                            }`}
-                          />
-                          <span className="text-sm sm:text-base">
-                            Anda: {agreements[currentUser?.uid] ? "Sudah Setuju" : "Belum Setuju"}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <FiCheckCircle
-                            className={`text-lg ${agreements[userId] ? "text-green-500" : "text-gray-400"}`}
-                          />
-                          <span className="text-sm sm:text-base">
-                            {otherUserName}: {agreements[userId] ? "Sudah Setuju" : "Belum Setuju"}
-                          </span>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="chat-room"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  transition={{ duration: 0.3 }}
+                  className="h-full flex flex-col"
+                >
+                  <motion.div
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                    className="bg-white/80 backdrop-blur-md rounded-2xl shadow-lg p-4 sm:p-6 mb-4 sm:mb-6"
+                  >
+                    <div className="flex items-center justify-between flex-col sm:flex-row gap-3 sm:gap-4">
+                      <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                        <Button
+                          onClick={() => navigate("/profile", { state: { activeTab: "barter" } })}
+                          variant="outline"
+                          className="p-2 sm:p-3 flex-shrink-0"
+                        >
+                          <FiArrowLeft className="text-lg" />
+                        </Button>
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          {renderAvatar(otherUserAvatar, otherUserName, "w-10 h-10 sm:w-12 sm:h-12")}
+                          <div className="min-w-0 flex-1">
+                            <h1 className="text-base sm:text-lg font-bold text-[var(--color-black)] truncate">
+                              {task?.title || "Loading..."}
+                            </h1>
+                            <p className="text-xs sm:text-sm text-gray-600 truncate">
+                              Dengan: {otherUserName}
+                            </p>
+                          </div>
                         </div>
                       </div>
-                      <button
-                        onClick={handleAgreeToComplete}
-                        disabled={agreements[currentUser?.uid]}
-                        className={`flex items-center justify-center gap-2 w-full px-4 py-2 rounded-xl font-semibold transition-all duration-300 text-sm sm:text-base ${
-                          agreements[currentUser?.uid]
-                            ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                            : "bg-[var(--color-primary)] text-white hover:bg-[var(--color-secondary)]"
-                        }`}
-                      >
-                        <FiCheckCircle className="text-lg" />
-                        {agreements[currentUser?.uid] ? "Menunggu Persetujuan" : "Setuju Selesai"}
-                      </button>
+                      {task && (
+                        <div className="flex items-center gap-2 bg-[var(--color-primary)]/10 rounded-lg px-3 py-2">
+                          <FiCheckCircle className="text-[var(--color-primary)] text-sm sm:text-base" />
+                          <span className="text-xs sm:text-sm font-medium text-[var(--color-primary)]">
+                            {task.status === 'baru' ? 'Barter Baru' : 'Dalam Proses'}
+                          </span>
+                        </div>
+                      )}
                     </div>
-                  )}
-                  {task && (
-                    <form onSubmit={handleSendMessage} className="mt-4 flex gap-2">
-                      <input
-                        type="text"
-                        value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
-                        placeholder="Ketik pesan..."
-                        className="flex-1 p-3 rounded-xl bg-[var(--color-white)] border border-[var(--color-secondary)]/30 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] text-sm sm:text-base"
-                      />
-                      <button
-                        type="submit"
-                        disabled={!newMessage.trim()}
-                        className="bg-[var(--color-primary)] text-white p-3 rounded-xl hover:bg-[var(--color-secondary)] transition-all duration-300 disabled:opacity-50"
-                      >
-                        <FiSend className="text-lg" />
-                      </button>
-                    </form>
-                  )}
+                  </motion.div>
+                  <div className="flex-1 flex flex-col bg-white/80 backdrop-blur-md border border-[var(--color-secondary)]/30 rounded-2xl shadow-lg overflow-hidden">
+                    <div className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6 space-y-3 sm:space-y-4">
+                      <AnimatePresence>
+                        {messages.length === 0 ? (
+                          <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="flex flex-col items-center justify-center h-full text-gray-500 py-8 sm:py-12"
+                          >
+                            <FiMessageSquare className="text-3xl sm:text-4xl md:text-5xl text-[var(--color-primary)] mb-3 sm:mb-4" />
+                            <p className="text-xs sm:text-sm text-center max-w-md px-4">
+                              Mulai percakapan dengan mengirim pesan pertama untuk membahas detail barter
+                            </p>
+                          </motion.div>
+                        ) : (
+                          messages.map((message) => (
+                            <motion.div
+                              key={message.id}
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ duration: 0.3 }}
+                              className={`flex ${message.senderId === currentUser?.uid ? "justify-end" : "justify-start"}`}
+                            >
+                              <div className={`max-w-[90%] sm:max-w-[85%] md:max-w-[70%] flex gap-2 sm:gap-3 ${message.senderId === currentUser?.uid ? "flex-row-reverse" : "flex-row"}`}>
+                                {message.senderId !== currentUser?.uid && (
+                                  <div className="flex-shrink-0">
+                                    {renderAvatar(otherUserAvatar, otherUserName, "w-8 h-8 sm:w-10 sm:h-10")}
+                                  </div>
+                                )}
+                                <div
+                                  className={`p-3 sm:p-4 rounded-2xl ${
+                                    message.senderId === currentUser?.uid
+                                      ? "bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary)]/90 text-white rounded-br-none"
+                                      : "bg-gray-100 text-[var(--color-black)] rounded-bl-none border border-gray-200"
+                                  }`}
+                                >
+                                  <p className="text-sm sm:text-base break-words">{message.text}</p>
+                                  <p className={`text-xs mt-1 sm:mt-2 ${
+                                    message.senderId === currentUser?.uid ? "text-white/70" : "text-gray-500"
+                                  }`}>
+                                    {message.createdAt?.toDate().toLocaleTimeString('id-ID', {
+                                      hour: '2-digit',
+                                      minute: '2-digit'
+                                    })}
+                                  </p>
+                                </div>
+                              </div>
+                            </motion.div>
+                          ))
+                        )}
+                      </AnimatePresence>
+                      <div ref={messagesEndRef} />
+                    </div>
+                    {task && (
+                      <div className="border-t border-gray-200 bg-gray-50/50 p-4 sm:p-6">
+                        <h3 className="text-sm sm:text-base md:text-lg font-semibold text-[var(--color-black)] mb-3 sm:mb-4 text-center">
+                          🎉 Status Penyelesaian Barter
+                        </h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4">
+                          <div className={`flex items-center justify-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-xl ${
+                            agreements[currentUser?.uid] ? "bg-green-100 border border-green-200" : "bg-gray-100 border border-gray-200"
+                          }`}>
+                            <FiCheckCircle className={`text-lg sm:text-xl ${agreements[currentUser?.uid] ? "text-green-600" : "text-gray-400"}`} />
+                            <div>
+                              <p className="font-medium text-xs sm:text-sm">Anda</p>
+                              <p className={`text-xs sm:text-sm ${agreements[currentUser?.uid] ? "text-green-700" : "text-gray-600"}`}>
+                                {agreements[currentUser?.uid] ? "✅ Sudah Setuju" : "⏳ Belum Setuju"}
+                              </p>
+                            </div>
+                          </div>
+                          <div className={`flex items-center justify-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-xl ${
+                            agreements[userId] ? "bg-green-100 border border-green-200" : "bg-gray-100 border border-gray-200"
+                          }`}>
+                            <FiCheckCircle className={`text-lg sm:text-xl ${agreements[userId] ? "text-green-600" : "text-gray-400"}`} />
+                            <div>
+                              <p className="font-medium text-xs sm:text-sm">{otherUserName}</p>
+                              <p className={`text-xs sm:text-sm ${agreements[userId] ? "text-green-700" : "text-gray-600"}`}>
+                                {agreements[userId] ? "✅ Sudah Setuju" : "⏳ Belum Setuju"}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        <Button
+                          onClick={handleAgreeToComplete}
+                          disabled={hasAgreed || agreements[currentUser?.uid]}
+                          variant={(hasAgreed || agreements[currentUser?.uid]) ? "outline" : "primary"}
+                          className="w-full py-2 sm:py-3 text-sm sm:text-base font-semibold"
+                        >
+                          <FiCheckCircle className="inline mr-2" />
+                          {(hasAgreed || agreements[currentUser?.uid]) ? "✅ Sudah Disetujui" : "Setuju Selesaikan Barter"}
+                        </Button>
+                      </div>
+                    )}
+                    {task && (
+                      <form onSubmit={handleSendMessage} className="border-t border-gray-200 p-3 sm:p-4">
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={newMessage}
+                            onChange={(e) => setNewMessage(e.target.value)}
+                            placeholder="Ketik pesan Anda..."
+                            className="flex-1 p-2 sm:p-3 md:p-4 rounded-xl bg-white border border-[var(--color-secondary)]/30 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] text-sm sm:text-base shadow-sm"
+                          />
+                          <Button
+                            type="submit"
+                            disabled={!newMessage.trim()}
+                            variant="primary"
+                            className="px-3 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 flex items-center gap-1 sm:gap-2 font-semibold text-sm sm:text-base"
+                          >
+                            <FiSend className="text-base sm:text-lg" />
+                            <span className="hidden sm:inline">Kirim</span>
+                          </Button>
+                        </div>
+                      </form>
+                    )}
+                  </div>
                 </motion.div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        )}
+              )}
+            </AnimatePresence>
+          )}
+        </div>
       </main>
     </div>
   );

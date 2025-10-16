@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiX, FiMapPin, FiStar, FiMessageSquare, FiUser, FiCalendar, FiImage } from "react-icons/fi";
 import Button from "./Button";
+import { StatusLabel, SkillLabel } from "./Label";
 
 export default function DetailTradeModal({ isOpen, onClose, task }) {
   const navigate = useNavigate();
@@ -85,17 +86,7 @@ export default function DetailTradeModal({ isOpen, onClose, task }) {
               
               {/* Status Badge */}
               <div className="absolute top-4 left-4">
-                <span className={`px-3 py-1 rounded-full text-xs font-semibold shadow-lg ${
-                  task.status === 'baru' 
-                    ? 'bg-green-500 text-white' 
-                    : task.status === 'proses'
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-gray-500 text-white'
-                }`}>
-                  {task.status === 'baru' ? 'Baru' : 
-                   task.status === 'proses' ? 'Dalam Proses' : 
-                   task.status || 'Tidak Diketahui'}
-                </span>
+                <StatusLabel status={task.status} />
               </div>
             </div>
 
@@ -135,9 +126,11 @@ export default function DetailTradeModal({ isOpen, onClose, task }) {
                     <FiStar className="text-[var(--color-secondary)]" />
                     Skill yang Dibutuhkan
                   </h3>
-                  <p className="text-[var(--color-black)] font-medium">
-                    {task.requiredSkill || task.neededSkill || "Tidak ditentukan"}
-                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <SkillLabel type="needed">
+                      {task.requiredSkill || task.neededSkill || "Tidak ditentukan"}
+                    </SkillLabel>
+                  </div>
                 </div>
                 
                 <div className="bg-[var(--color-primary)]/10 rounded-xl p-4 border border-[var(--color-primary)]/20">
@@ -145,9 +138,11 @@ export default function DetailTradeModal({ isOpen, onClose, task }) {
                     <FiStar className="text-[var(--color-primary)]" />
                     Skill yang Ditawarkan
                   </h3>
-                  <p className="text-[var(--color-black)] font-medium">
-                    {task.offeredSkill || "Tidak ditentukan"}
-                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <SkillLabel type="offered">
+                      {task.offeredSkill || "Tidak ditentukan"}
+                    </SkillLabel>
+                  </div>
                 </div>
               </div>
 

@@ -13,49 +13,47 @@ import { auth, db } from "../firebase/firebase-config";
 import { useNavigate, useLocation } from "react-router-dom";
 import { collection, query, where, getDocs } from "firebase/firestore";
 
-export default function Sidebar({ activeTab, setActiveTab }) {
+export default function Sidebar({ activeTab, setActiveTab, onItemClick, isOpen }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const [notificationCount, setNotificationCount] = useState(0);
-  const [isOpen, setIsOpen] = useState(() => window.innerWidth >= 768);
+  const [sidebarOpen, setSidebarOpen] = useState(isOpen);
+
+  // Sync sidebarOpen with prop
+  useEffect(() => {
+    setSidebarOpen(isOpen);
+  }, [isOpen]);
 
   // Toggle sidebar
-  const toggleSidebar = () => setIsOpen(!isOpen);
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
+    onItemClick(!sidebarOpen);
+  };
 
-  // Responsif: ubah state ketika ukuran layar berubah
+  // Responsive: update state on window resize
   useEffect(() => {
-    const handleResize = () => setIsOpen(window.innerWidth >= 768);
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) {
+        setSidebarOpen(true);
+        onItemClick(true);
+      }
+    };
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  }, [onItemClick]);
 
-  // Deteksi tab aktif berdasarkan route
+  // Detect active tab
   const getActiveTab = () => activeTab;
-
-  // Ambil jumlah notifikasi (jika diperlukan di masa depan)
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        const q = query(
-          collection(db, "offers"),
-          where("taskCreatorId", "==", user.uid),
-          where("status", "==", "pending")
-        );
-        const querySnapshot = await getDocs(q);
-        setNotificationCount(querySnapshot.docs.length);
-      } else {
-        setNotificationCount(0);
-      }
-    });
-    return () => unsubscribe();
-  }, []);
 
   const handleLogout = async () => {
     await signOut(auth);
     navigate("/login");
+    if (window.innerWidth < 1024) {
+      setSidebarOpen(false);
+      onItemClick(false);
+    }
   };
 
-  // Daftar menu (tanpa “Pesan”)
+  // Menu items
   const menuItems = [
     { name: "Profil", icon: <FiUser className="w-5 h-5" />, tab: "profile" },
     { name: "Daftar Barter", icon: <FiList className="w-5 h-5" />, tab: "barter" },
@@ -66,26 +64,25 @@ export default function Sidebar({ activeTab, setActiveTab }) {
   return (
     <aside
       className={`bg-white h-screen shadow-md flex flex-col justify-between transition-all duration-300
-        ${isOpen ? "w-64" : "w-16"} md:w-64 p-4 md:p-6 fixed top-0 left-0 z-50 border-r border-gray-200`}
+        ${sidebarOpen ? "w-64" : "w-16"} lg:w-64 p-4 lg:p-6 fixed top-0 left-0 z-50 border-r border-gray-200`}
     >
       {/* Header + Toggle */}
       <div>
-        <div className="flex items-center justify-center md:justify-between my-5 gap-10 relative">
+        <div className="flex items-center justify-center lg:justify-between my-5 gap-10 relative">
           <h1
             className={`text-3xl font-extrabold text-[var(--color-primary)] text-center
-              ${isOpen ? "block" : "hidden"} md:block`}
+              ${sidebarOpen ? "block" : "hidden"} lg:block`}
           >
             BarterKita
           </h1>
           <button
-            className="text-gray-700 md:hidden focus:outline-none"
+            className="text-gray-700 lg:hidden focus:outline-none"
             onClick={toggleSidebar}
-            aria-label={isOpen ? "Close Sidebar" : "Open Sidebar"}
+            aria-label={sidebarOpen ? "Close Sidebar" : "Open Sidebar"}
           >
-            {isOpen ? <FiX size={24} /> : <FiMenu size={24} />}
+            {sidebarOpen ? <FiX size={24} /> : <FiMenu size={24} />}
           </button>
         </div>
-
         {/* Navigation */}
         <nav className="flex flex-col gap-2 mt-6">
           {menuItems.map((item, index) => (
@@ -94,38 +91,34 @@ export default function Sidebar({ activeTab, setActiveTab }) {
               onClick={() => {
                 setActiveTab(item.tab);
                 navigate("/profile");
-                if (window.innerWidth < 768) setIsOpen(false);
+                if (window.innerWidth < 1024) {
+                  setSidebarOpen(false);
+                  onItemClick(false);
+                }
               }}
               className={`flex items-center gap-3 px-3 py-3 rounded-lg text-left transition-all relative
-                ${
-                  getActiveTab() === item.tab
-                    ? "bg-[var(--color-secondary)] text-white shadow-md"
-                    : "text-gray-700 hover:bg-gray-100"
+                ${getActiveTab() === item.tab
+                  ? "bg-[var(--color-secondary)] text-white shadow-md"
+                  : "text-gray-700 hover:bg-gray-100"
                 }
-                ${isOpen ? "justify-start" : "justify-center"} md:justify-start`}
+                ${sidebarOpen ? "justify-start" : "justify-center"} lg:justify-start`}
             >
               <div className="text-xl">{item.icon}</div>
-              <span
-                className={`${isOpen ? "block" : "hidden"} md:block font-medium`}
-              >
+              <span className={`${sidebarOpen ? "block" : "hidden"} lg:block font-medium`}>
                 {item.name}
               </span>
             </button>
           ))}
         </nav>
       </div>
-
-      {/* Tombol Logout */}
+      {/* Logout Button */}
       <button
-        onClick={() => {
-          handleLogout();
-          if (window.innerWidth < 768) setIsOpen(false);
-        }}
+        onClick={handleLogout}
         className={`flex items-center gap-3 border border-red-400 text-red-500 hover:bg-red-50 transition-all duration-300 rounded-lg py-3 w-full
-          ${isOpen ? "justify-start px-4" : "justify-center"} md:justify-start`}
+          ${sidebarOpen ? "justify-start px-4" : "justify-center"} lg:justify-start`}
       >
         <FiLogOut className="w-5 h-5" />
-        <span className={`${isOpen ? "block" : "hidden"} md:block font-medium`}>
+        <span className={`${sidebarOpen ? "block" : "hidden"} lg:block font-medium`}>
           Keluar
         </span>
       </button>

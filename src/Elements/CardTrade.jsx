@@ -1,5 +1,6 @@
 import React from "react";
 import { FiInfo, FiMessageSquare, FiImage, FiEdit, FiTrash2 } from "react-icons/fi";
+import { SkillLabel, StatusLabel, OwnerLabel } from "./Label";
 
 export default function CardTrade({ item, user, isOwner, onEdit, onDelete, onClick, onOpenDetail }) {
   // Untuk Marketplace, tampilkan tombol berbeda berdasarkan kepemilikan
@@ -24,25 +25,13 @@ export default function CardTrade({ item, user, isOwner, onEdit, onDelete, onCli
         
         {/* Status Badge */}
         <div className="absolute top-3 left-3">
-          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-            item.status === 'baru' 
-              ? 'bg-green-100 text-green-800' 
-              : item.status === 'proses'
-              ? 'bg-blue-100 text-blue-800'
-              : 'bg-gray-100 text-gray-800'
-          }`}>
-            {item.status === 'baru' ? 'Baru' : 
-             item.status === 'proses' ? 'Proses' : 
-             item.status || 'Unknown'}
-          </span>
+          <StatusLabel status={item.status} />
         </div>
 
         {/* Owner Badge */}
         {isOwner && (
           <div className="absolute top-3 right-3">
-            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-[var(--color-primary)] text-white">
-              Milik Anda
-            </span>
+            <OwnerLabel />
           </div>
         )}
       </div>
@@ -59,12 +48,12 @@ export default function CardTrade({ item, user, isOwner, onEdit, onDelete, onCli
 
         {/* Skills */}
         <div className="flex flex-wrap gap-2 mb-3">
-          <span className="bg-[var(--color-primary)]/10 text-[var(--color-primary)] px-2 py-1 rounded text-xs">
+          <SkillLabel type="needed">
             Butuh: {item.requiredSkill || item.neededSkill}
-          </span>
-          <span className="bg-[var(--color-secondary)]/10 text-[var(--color-secondary)] px-2 py-1 rounded text-xs">
+          </SkillLabel>
+          <SkillLabel type="offered">
             Tawaran: {item.offeredSkill}
-          </span>
+          </SkillLabel>
         </div>
 
         {/* Location & Creator */}

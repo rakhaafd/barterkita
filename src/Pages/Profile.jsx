@@ -42,12 +42,12 @@ export default function Profile() {
       {/* Sidebar */}
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
 
-      {/* Konten utama */}
+      {/* Konten utama - HAPUS PADDING DI SINI karena sudah dihandle di komponen child */}
       <main
-        className={`flex-1 transition-all duration-300 p-4 sm:p-6 md:p-8
+        className={`flex-1 transition-all duration-300 min-w-0
           ${isSidebarOpen ? "md:ml-64" : "ml-16 md:ml-64"}`}
       >
-        <div className="max-w-6xl mx-auto">{renderContent()}</div>
+        {renderContent()}
       </main>
     </div>
   );

@@ -57,9 +57,6 @@ const Navbar = () => {
           <Link to="/marketplace" className="hover:text-[var(--color-secondary)] transition-colors">
             Marketplace
           </Link>
-          <Link to="/dashboard" className="hover:text-[var(--color-secondary)] transition-colors">
-            Dashboard
-          </Link>
         </div>
         {/* DESKTOP BUTTON / AVATAR */}
         <div className="hidden md:flex items-center gap-3 relative">
@@ -176,13 +173,6 @@ const Navbar = () => {
               className="text-[var(--color-black)] hover:text-[var(--color-secondary)] transition-colors"
             >
               Marketplace
-            </Link>
-            <Link
-              to="/dashboard"
-              onClick={closeMenus}
-              className="text-[var(--color-black)] hover:text-[var(--color-secondary)] transition-colors"
-            >
-              Dashboard
             </Link>
             {!isLoggedIn && (
               <Link to="/login" onClick={closeMenus}>

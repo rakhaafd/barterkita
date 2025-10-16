@@ -1,37 +1,25 @@
-import { StrictMode } from "react";
-import { createRoot } from "react-dom/client";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import "./index.css";
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import './index.css';
+import Home from './Pages/Home.jsx';
+import Login from './Pages/Login.jsx';
+import Register from './Pages/Register.jsx';
+import Marketplace from './Pages/Marketplace.jsx';
+import Profile from './Pages/Profile.jsx';
+import Chat from './Fragments/Chat.jsx';
 
-// Pages
-import Home from "./Pages/Home.jsx";
-import Profile from "./Pages/Profile.jsx";
-import Login from "./Pages/Login.jsx";
-import Register from "./Pages/Register.jsx";
-import Marketplace from "./Pages/Marketplace.jsx";
-import DashboardUser from "./Pages/DashboardUser.jsx";
-// Admin Pages
-import DashboardAdmin from "./Pages/Admin/DashboardAdmin.jsx";
-import AdminLogin from "./Pages/Admin/Login.jsx";
-import User from "./Pages/Admin/User.jsx";
-
-createRoot(document.getElementById("root")).render(
-  <StrictMode>
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/profile" element={<Profile />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/marketplace" element={<Marketplace />} />
-        <Route path="/dashboard" element={<DashboardUser />} />
-
-
-        {/* Admin Nested */}
-        {/* <Route path="/admin/dashboard" element={<Dashboard />} />
-        <Route path="/admin/login" element={<AdminLogin />} />
-        <Route path="/admin/user" element={<User />} /> */}
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/chat/:taskId/:userId" element={<Chat />} />
       </Routes>
     </BrowserRouter>
-  </StrictMode>
+  </React.StrictMode>
 );

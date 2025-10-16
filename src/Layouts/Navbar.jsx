@@ -33,7 +33,7 @@ const Navbar = () => {
       await signOut(auth);
       setIsLoggedIn(false);
       closeMenus();
-      navigate("/login"); // redirect ke login
+      navigate("/login");
     } catch (err) {
       console.error("Gagal logout:", err);
     }
@@ -49,7 +49,6 @@ const Navbar = () => {
         >
           Barter<span className="text-[var(--color-secondary)]">Kita</span>
         </Link>
-
         {/* DESKTOP MENU */}
         <div className="hidden md:flex items-center gap-8 font-medium text-[var(--color-black)]">
           <Link to="/" className="hover:text-[var(--color-secondary)] transition-colors">
@@ -62,7 +61,6 @@ const Navbar = () => {
             Dashboard
           </Link>
         </div>
-
         {/* DESKTOP BUTTON / AVATAR */}
         <div className="hidden md:flex items-center gap-3 relative">
           {isLoggedIn ? (
@@ -88,13 +86,6 @@ const Navbar = () => {
                     >
                       Profil Saya
                     </Link>
-                    <Link
-                      to="/my-barters"
-                      onClick={closeMenus}
-                      className="block px-4 py-2 hover:bg-gray-100"
-                    >
-                      Daftar Barter
-                    </Link>
                     <button
                       onClick={handleLogout}
                       className="w-full text-left px-4 py-2 text-red-500 hover:bg-gray-100"
@@ -113,7 +104,6 @@ const Navbar = () => {
             </Link>
           )}
         </div>
-
         {/* MOBILE SECTION */}
         <div className="flex items-center gap-3 md:hidden">
           {/* ICON PROFIL MOBILE */}
@@ -140,13 +130,6 @@ const Navbar = () => {
                     >
                       Profil Saya
                     </Link>
-                    <Link
-                      to="/my-barters"
-                      onClick={closeMenus}
-                      className="block px-4 py-2 hover:bg-gray-100"
-                    >
-                      Daftar Barter
-                    </Link>
                     <button
                       onClick={handleLogout}
                       className="w-full text-left px-4 py-2 text-red-500 hover:bg-gray-100"
@@ -158,7 +141,6 @@ const Navbar = () => {
               </AnimatePresence>
             </div>
           )}
-
           {/* HAMBURGER MENU */}
           <button
             onClick={() => {
@@ -171,7 +153,6 @@ const Navbar = () => {
           </button>
         </div>
       </div>
-
       {/* MOBILE DROPDOWN MENU */}
       <AnimatePresence>
         {isOpen && (
@@ -203,8 +184,6 @@ const Navbar = () => {
             >
               Dashboard
             </Link>
-
-            {/* Jika belum login tampilkan tombol login */}
             {!isLoggedIn && (
               <Link to="/login" onClick={closeMenus}>
                 <Button variant="secondary" className="w-full font-semibold">

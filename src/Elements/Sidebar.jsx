@@ -1,66 +1,133 @@
-import React from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
 import {
   FiUser,
   FiList,
   FiShield,
   FiFileText,
   FiLogOut,
+  FiX,
+  FiMenu,
 } from "react-icons/fi";
-import { signOut } from "firebase/auth";
-import { auth } from "../firebase/firebase-config";
+import { signOut, onAuthStateChanged } from "firebase/auth";
+import { auth, db } from "../firebase/firebase-config";
+import { useNavigate, useLocation } from "react-router-dom";
+import { collection, query, where, getDocs } from "firebase/firestore";
 
-export default function Sidebar() {
+export default function Sidebar({ activeTab, setActiveTab }) {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [notificationCount, setNotificationCount] = useState(0);
+  const [isOpen, setIsOpen] = useState(() => window.innerWidth >= 768);
+
+  // Toggle sidebar
+  const toggleSidebar = () => setIsOpen(!isOpen);
+
+  // Responsif: ubah state ketika ukuran layar berubah
+  useEffect(() => {
+    const handleResize = () => setIsOpen(window.innerWidth >= 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Deteksi tab aktif berdasarkan route
+  const getActiveTab = () => activeTab;
+
+  // Ambil jumlah notifikasi (jika diperlukan di masa depan)
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const q = query(
+          collection(db, "offers"),
+          where("taskCreatorId", "==", user.uid),
+          where("status", "==", "pending")
+        );
+        const querySnapshot = await getDocs(q);
+        setNotificationCount(querySnapshot.docs.length);
+      } else {
+        setNotificationCount(0);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
 
   const handleLogout = async () => {
     await signOut(auth);
     navigate("/login");
   };
 
+  // Daftar menu (tanpa “Pesan”)
   const menuItems = [
-    { name: "Profile", icon: <FiUser />, path: "/profile" },
-    { name: "Daftar Barter", icon: <FiList />, path: "/barter-list" },
-    { name: "Kebijakan Privasi", icon: <FiShield />, path: "/privacy-policy" },
-    { name: "Ketentuan Pengguna", icon: <FiFileText />, path: "/terms" },
+    { name: "Profil", icon: <FiUser className="w-5 h-5" />, tab: "profile" },
+    { name: "Daftar Barter", icon: <FiList className="w-5 h-5" />, tab: "barter" },
+    { name: "Ketentuan Pengguna", icon: <FiFileText className="w-5 h-5" />, tab: "terms" },
+    { name: "Kebijakan Privasi", icon: <FiShield className="w-5 h-5" />, tab: "privacy" },
   ];
 
   return (
-    <aside className="min-h-screen w-64 bg-white border-r border-gray-200 flex flex-col justify-between py-6 px-4 fixed left-0 top-0">
-      {/* Logo */}
+    <aside
+      className={`bg-white h-screen shadow-md flex flex-col justify-between transition-all duration-300
+        ${isOpen ? "w-64" : "w-16"} md:w-64 p-4 md:p-6 fixed top-0 left-0 z-50 border-r border-gray-200`}
+    >
+      {/* Header + Toggle */}
       <div>
-        <h1 className="text-2xl font-bold text-[var(--color-primary)] text-center mb-8">
-          BarterKita
-        </h1>
+        <div className="flex items-center justify-center md:justify-between my-5 gap-10 relative">
+          <h1
+            className={`text-3xl font-extrabold text-[var(--color-primary)] text-center
+              ${isOpen ? "block" : "hidden"} md:block`}
+          >
+            BarterKita
+          </h1>
+          <button
+            className="text-gray-700 md:hidden focus:outline-none"
+            onClick={toggleSidebar}
+            aria-label={isOpen ? "Close Sidebar" : "Open Sidebar"}
+          >
+            {isOpen ? <FiX size={24} /> : <FiMenu size={24} />}
+          </button>
+        </div>
 
-        {/* Menu Navigasi */}
-        <nav className="flex flex-col gap-2">
+        {/* Navigation */}
+        <nav className="flex flex-col gap-2 mt-6">
           {menuItems.map((item, index) => (
-            <NavLink
+            <button
               key={index}
-              to={item.path}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-300 ${
-                  isActive
-                    ? "bg-[var(--color-secondary)] text-white shadow-sm"
+              onClick={() => {
+                setActiveTab(item.tab);
+                navigate("/profile");
+                if (window.innerWidth < 768) setIsOpen(false);
+              }}
+              className={`flex items-center gap-3 px-3 py-3 rounded-lg text-left transition-all relative
+                ${
+                  getActiveTab() === item.tab
+                    ? "bg-[var(--color-secondary)] text-white shadow-md"
                     : "text-gray-700 hover:bg-gray-100"
-                }`
-              }
+                }
+                ${isOpen ? "justify-start" : "justify-center"} md:justify-start`}
             >
-              {item.icon}
-              <span className="font-medium">{item.name}</span>
-            </NavLink>
+              <div className="text-xl">{item.icon}</div>
+              <span
+                className={`${isOpen ? "block" : "hidden"} md:block font-medium`}
+              >
+                {item.name}
+              </span>
+            </button>
           ))}
         </nav>
       </div>
 
-      {/* Tombol Sign Out */}
+      {/* Tombol Logout */}
       <button
-        onClick={handleLogout}
-        className="flex items-center justify-center gap-2 border border-red-400 text-red-500 hover:bg-red-50 transition-all duration-300 rounded-lg py-2 font-medium"
+        onClick={() => {
+          handleLogout();
+          if (window.innerWidth < 768) setIsOpen(false);
+        }}
+        className={`flex items-center gap-3 border border-red-400 text-red-500 hover:bg-red-50 transition-all duration-300 rounded-lg py-3 w-full
+          ${isOpen ? "justify-start px-4" : "justify-center"} md:justify-start`}
       >
-        <FiLogOut />
-        Keluar
+        <FiLogOut className="w-5 h-5" />
+        <span className={`${isOpen ? "block" : "hidden"} md:block font-medium`}>
+          Keluar
+        </span>
       </button>
     </aside>
   );

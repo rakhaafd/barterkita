@@ -1,34 +1,53 @@
-import React, { useState } from "react";
-import { useLocation } from "react-router-dom";
+import React, { useState, useEffect } from "react";
 import Sidebar from "../Elements/Sidebar";
-import EditProfile from "./EditProfile";
-import BarterList from "./BarterList";
-import Terms from "./Terms";
+import EditProfile from "../Fragments/EditProfile";
+import BarterList from "../Fragments/BarterList";
+import Terms from "../Fragments/Terms";
+import Privacy from "../Fragments/Privacy";
+import { useLocation } from "react-router-dom";
 
 export default function Profile() {
   const location = useLocation();
-  const [activeTab, setActiveTab] = useState(() => {
-    // Determine active tab based on the current route
-    switch (location.pathname) {
-      case "/barter-list":
-        return "barter";
-      case "/terms":
-        return "terms";
-      case "/profile":
-      default:
-        return "profile";
+  const [activeTab, setActiveTab] = useState(location.state?.activeTab || "profile");
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => window.innerWidth >= 768);
+
+  // Responsif: ubah saat ukuran layar berubah
+  useEffect(() => {
+    const handleResize = () => setIsSidebarOpen(window.innerWidth >= 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
+    if (location.state?.activeTab) {
+      setActiveTab(location.state.activeTab);
     }
-  });
+  }, [location.state]);
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case "barter":
+        return <BarterList />;
+      case "terms":
+        return <Terms />;
+      case "privacy":
+        return <Privacy />;
+      default:
+        return <EditProfile />;
+    }
+  };
 
   return (
     <div className="flex min-h-screen bg-[var(--color-white)]">
-      <Sidebar setActiveTab={setActiveTab} />
-      <main className="flex-1 ml-64">
-        <>
-          {activeTab === "profile" && <EditProfile />}
-          {activeTab === "barter" && <BarterList />}
-          {activeTab === "terms" && <Terms />}
-        </>
+      {/* Sidebar */}
+      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+
+      {/* Konten utama */}
+      <main
+        className={`flex-1 transition-all duration-300 p-4 sm:p-6 md:p-8
+          ${isSidebarOpen ? "md:ml-64" : "ml-16 md:ml-64"}`}
+      >
+        <div className="max-w-6xl mx-auto">{renderContent()}</div>
       </main>
     </div>
   );

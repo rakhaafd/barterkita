@@ -3,18 +3,18 @@
     "id": 1,
     "title": "Sosial",
     "description": "Membangun komunitas yang saling mendukung, berbagi keahlian, dan saling membantu untuk mencapai tujuan bersama.",
-    "image": "/data/deal.jpg"
+    "image": "https://images.pexels.com/photos/1049317/pexels-photo-1049317.jpeg"
   },
   {
     "id": 2,
     "title": "Ekonomi",
     "description": "Memungkinkan pertukaran skill tanpa uang, menghemat biaya, serta memberikan kesempatan belajar lintas profesi.",
-    "image": "/data/trust.jpg"
+    "image": "https://images.pexels.com/photos/1602726/pexels-photo-1602726.jpeg"
   },
   {
     "id": 3,
-    "title": "Reputasi",
-    "description": "Menunjukkan kredibilitas dan kontribusi pengguna dalam komunitas melalui sistem ulasan dan reputasi yang transparan.",
-    "image": "/data/reputation.jpg"
+    "title": "Kepercayaan",
+    "description": "Menumbuhkan kepercayaan antar pengguna dengan memastikan setiap pertukaran dilakukan secara jujur dan bertanggung jawab.",
+    "image": "https://images.pexels.com/photos/3184465/pexels-photo-3184465.jpeg"
   }
 ]

@@ -1,16 +1,17 @@
 import React from "react";
 
+// Kelas dasar yang konsisten untuk semua label
+const baseLabelClasses = "px-2 py-1 rounded text-xs font-medium";
+
 // Komponen Label untuk Skill
 export const SkillLabel = ({ type, children }) => {
-  const baseClasses = "px-2 py-1 rounded text-xs font-medium";
-  
   const typeClasses = {
     needed: "bg-[#0b4e65] text-white", // primary color
     offered: "bg-[#fbc13a] text-[#2a2b2a]", // secondary color
   };
 
   return (
-    <span className={`${baseClasses} ${typeClasses[type] || typeClasses.needed}`}>
+    <span className={`${baseLabelClasses} ${typeClasses[type] || typeClasses.needed}`}>
       {children}
     </span>
   );
@@ -18,8 +19,6 @@ export const SkillLabel = ({ type, children }) => {
 
 // Komponen Label untuk Status
 export const StatusLabel = ({ status }) => {
-  const baseClasses = "px-3 py-1 rounded-full text-xs font-semibold";
-  
   const statusConfig = {
     baru: {
       className: "bg-green-100 text-green-800 border border-green-200",
@@ -38,7 +37,7 @@ export const StatusLabel = ({ status }) => {
   const config = statusConfig[status] || statusConfig.baru;
 
   return (
-    <span className={`${baseClasses} ${config.className}`}>
+    <span className={`${baseLabelClasses} ${config.className}`}>
       {config.label}
     </span>
   );
@@ -47,7 +46,7 @@ export const StatusLabel = ({ status }) => {
 // Komponen Label untuk Kepemilikan
 export const OwnerLabel = () => {
   return (
-    <span className="px-3 py-1 rounded-full text-xs font-semibold bg-[#0b4e65] text-white border border-[#0b4e65]">
+    <span className={`${baseLabelClasses} bg-[#0b4e65] text-white border border-[#0b4e65]`}>
       Milik Anda
     </span>
   );
@@ -56,7 +55,7 @@ export const OwnerLabel = () => {
 // Komponen Label Kustom dengan warna primary
 export const PrimaryLabel = ({ children, className = "" }) => {
   return (
-    <span className={`px-3 py-1 rounded-full text-xs font-semibold bg-[#0b4e65] text-white border border-[#0b4e65] ${className}`}>
+    <span className={`${baseLabelClasses} bg-[#0b4e65] text-white border border-[#0b4e65] ${className}`}>
       {children}
     </span>
   );
@@ -65,7 +64,7 @@ export const PrimaryLabel = ({ children, className = "" }) => {
 // Komponen Label Kustom dengan warna secondary
 export const SecondaryLabel = ({ children, className = "" }) => {
   return (
-    <span className={`px-3 py-1 rounded-full text-xs font-semibold bg-[#fbc13a] text-[#2a2b2a] border border-[#fbc13a] ${className}`}>
+    <span className={`${baseLabelClasses} bg-[#fbc13a] text-[#2a2b2a] border border-[#fbc13a] ${className}`}>
       {children}
     </span>
   );

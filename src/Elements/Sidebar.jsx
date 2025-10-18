@@ -7,6 +7,7 @@ import {
   FiLogOut,
   FiX,
   FiMenu,
+  FiArrowLeft,
 } from "react-icons/fi";
 import { signOut, onAuthStateChanged } from "firebase/auth";
 import { auth, db } from "../firebase/firebase-config";
@@ -53,6 +54,15 @@ export default function Sidebar({ activeTab, setActiveTab, onItemClick, isOpen }
     }
   };
 
+  // Navigate to home route
+  const handleHomeNavigation = () => {
+    navigate("/");
+    if (window.innerWidth < 1024) {
+      setSidebarOpen(false);
+      onItemClick(false);
+    }
+  };
+
   // Menu items
   const menuItems = [
     { name: "Profil", icon: <FiUser className="w-5 h-5" />, tab: "profile" },
@@ -68,13 +78,22 @@ export default function Sidebar({ activeTab, setActiveTab, onItemClick, isOpen }
     >
       {/* Header + Toggle */}
       <div>
-        <div className="flex items-center justify-center lg:justify-between my-5 gap-10 relative">
-          <h1
-            className={`text-3xl font-extrabold text-[var(--color-primary)] text-center
-              ${sidebarOpen ? "block" : "hidden"} lg:block`}
-          >
-            BarterKita
-          </h1>
+        <div className="flex items-center justify-center lg:justify-between my-5 gap-2 relative">
+          <div className="flex items-center gap-2">
+            <button
+              className={`text-gray-700 focus:outline-none ${sidebarOpen ? "block" : "hidden"} lg:block`}
+              onClick={handleHomeNavigation}
+              aria-label="Back to Home"
+            >
+              <FiArrowLeft size={24} />
+            </button>
+            <h1
+              className={`text-3xl font-extrabold text-[var(--color-primary)] text-center
+                ${sidebarOpen ? "block" : "hidden"} lg:block`}
+            >
+              BarterKita
+            </h1>
+          </div>
           <button
             className="text-gray-700 lg:hidden focus:outline-none"
             onClick={toggleSidebar}
@@ -111,17 +130,27 @@ export default function Sidebar({ activeTab, setActiveTab, onItemClick, isOpen }
           ))}
         </nav>
       </div>
-      {/* Logout Button */}
-      <button
-        onClick={handleLogout}
-        className={`flex items-center gap-3 border border-red-400 text-red-500 hover:bg-red-50 transition-all duration-300 rounded-lg py-3 w-full
-          ${sidebarOpen ? "justify-start px-4" : "justify-center"} lg:justify-start`}
-      >
-        <FiLogOut className="w-5 h-5" />
-        <span className={`${sidebarOpen ? "block" : "hidden"} lg:block font-medium`}>
+      
+      {/* Logout Button - Simple icon only version */}
+      <div className="flex flex-col gap-2">
+        {/* Desktop Version - Full button with text */}
+        <button
+          onClick={handleLogout}
+          className={`hidden lg:flex items-center gap-3 border border-red-400 text-red-500 hover:bg-red-50 transition-all duration-300 rounded-lg py-3 px-4 w-full justify-start font-medium`}
+        >
+          <FiLogOut className="w-5 h-5" />
           Keluar
-        </span>
-      </button>
+        </button>
+
+        {/* Mobile Version - Icon only, always visible */}
+        <button
+          onClick={handleLogout}
+          className={`lg:hidden flex items-center justify-center border border-red-400 text-red-500 hover:bg-red-50 transition-all duration-300 rounded-lg py-3 w-full`}
+          aria-label="Keluar"
+        >
+          <FiLogOut className="w-6 h-6" />
+        </button>
+      </div>
     </aside>
   );
 }

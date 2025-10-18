@@ -12,6 +12,128 @@
   font-family: "Outfit";
 }
 
-h1, h2 {
+h1, h2, 
+h1 span, h2 span {
   font-family: "Kaushan Script";
+}
+
+/* Custom Scrollbar Styles - MORE VISIBLE */
+/* Untuk browser WebKit (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: #e5e7eb;
+  border-radius: 12px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-secondary);
+  border-radius: 12px;
+  border: 2px solid #e5e7eb;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #e0a82a;
+  border: 2px solid #d1d5db;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  transform: scale(1.05);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: #d4a024;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+::-webkit-scrollbar-corner {
+  background: #e5e7eb;
+}
+
+/* Untuk Firefox */
+* {
+  scrollbar-width: auto;
+  scrollbar-color: var(--color-secondary) #e5e7eb;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Scrollbar yang lebih menonjol untuk konten tertentu */
+.scrollbar-visible {
+  scrollbar-width: auto;
+  scrollbar-color: var(--color-secondary) #e5e7eb;
+}
+
+.scrollbar-visible::-webkit-scrollbar {
+  width: 14px;
+}
+
+.scrollbar-visible::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 14px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+
+.scrollbar-visible::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, var(--color-secondary) 0%, #e0a82a 100%);
+  border-radius: 14px;
+  border: 3px solid #f3f4f6;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.scrollbar-visible::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #e0a82a 0%, #d4a024 100%);
+  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Scrollbar tipis untuk area yang kecil */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-secondary) #f1f1f1;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: #f8f9fa;
+  border-radius: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: var(--color-secondary);
+  border-radius: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: #e0a82a;
+}
+
+/* Force scrollbar selalu terlihat di WebKit */
+::-webkit-scrollbar {
+  -webkit-appearance: none;
+}
+
+::-webkit-scrollbar:vertical {
+  width: 12px;
+}
+
+::-webkit-scrollbar:horizontal {
+  height: 12px;
+}
+
+/* Untuk browser yang support overlay scrollbars */
+@media screen and (min-width: 768px) {
+  ::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+  }
 }

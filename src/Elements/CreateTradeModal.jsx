@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiX, FiCheckCircle, FiUpload, FiImage } from "react-icons/fi";
+import { FiX, FiCheckCircle, FiUpload, FiImage, FiType, FiFileText, FiMapPin } from "react-icons/fi";
 
 export default function CreateTradeModal({ isOpen, onClose, onSubmit }) {
   const [formData, setFormData] = useState({
@@ -16,30 +16,19 @@ export default function CreateTradeModal({ isOpen, onClose, onSubmit }) {
   const [skills, setSkills] = useState([]);
   const [skillsLoading, setSkillsLoading] = useState(true);
 
-  // Load skills from JSON using fetch
   useEffect(() => {
     const fetchSkills = async () => {
       try {
         const response = await fetch('/data/skills.json');
-        if (!response.ok) {
-          throw new Error('Failed to fetch skills');
-        }
+        if (!response.ok) throw new Error('Failed to fetch skills');
         const data = await response.json();
         setSkills(data.skills);
       } catch (error) {
         console.error('Error loading skills:', error);
-        // Fallback skills jika fetch gagal
         setSkills([
-          "photo & videographer",
-          "illustrator",
-          "editor",
-          "marketing",
-          "content creator",
-          "designer",
-          "website developer",
-          "animator",
-          "copy writer",
-          "3d artist"
+          "photo & videographer", "illustrator", "editor", "marketing", 
+          "content creator", "designer", "website developer", "animator", 
+          "copy writer", "3d artist"
         ]);
       } finally {
         setSkillsLoading(false);
@@ -55,26 +44,21 @@ export default function CreateTradeModal({ isOpen, onClose, onSubmit }) {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Validasi tipe file
       const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
       if (!validTypes.includes(file.type)) {
         alert('Hanya file gambar (JPEG, PNG, GIF, WebP) yang diizinkan!');
         return;
       }
 
-      // Validasi ukuran file (max 1MB untuk Base64)
       if (file.size > 1 * 1024 * 1024) {
-        alert('Ukuran file maksimal 1MB untuk Base64!');
+        alert('Ukuran file maksimal 1MB!');
         return;
       }
 
       setFormData({ ...formData, image: file });
 
-      // Buat preview gambar
       const reader = new FileReader();
-      reader.onload = (e) => {
-        setImagePreview(e.target.result);
-      };
+      reader.onload = (e) => setImagePreview(e.target.result);
       reader.readAsDataURL(file);
     }
   };
@@ -84,7 +68,6 @@ export default function CreateTradeModal({ isOpen, onClose, onSubmit }) {
     setImagePreview(null);
   };
 
-  // Fungsi untuk convert file ke Base64
   const convertToBase64 = (file) => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -96,13 +79,8 @@ export default function CreateTradeModal({ isOpen, onClose, onSubmit }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.title || !formData.description) {
+    if (!formData.title || !formData.description || !formData.neededSkill || !formData.offeredSkill) {
       alert("Lengkapi semua data yang diperlukan!");
-      return;
-    }
-
-    if (!formData.neededSkill || !formData.offeredSkill) {
-      alert("Pilih skill yang dibutuhkan dan yang ditawarkan!");
       return;
     }
 
@@ -110,25 +88,19 @@ export default function CreateTradeModal({ isOpen, onClose, onSubmit }) {
 
     try {
       let imageBase64 = "";
-
-      // Convert gambar ke Base64 jika ada
       if (formData.image) {
-        console.log('Converting image to Base64...');
         imageBase64 = await convertToBase64(formData.image);
-        console.log('Image converted to Base64, length:', imageBase64.length);
       }
 
-      // Kirim data ke parent component
       onSubmit({
         title: formData.title,
         description: formData.description,
         neededSkill: formData.neededSkill,
         offeredSkill: formData.offeredSkill,
         location: formData.location,
-        imageBase64: imageBase64 // Kirim sebagai Base64 string
+        imageBase64: imageBase64
       });
 
-      // Reset form
       setFormData({
         title: "",
         description: "",
@@ -140,7 +112,7 @@ export default function CreateTradeModal({ isOpen, onClose, onSubmit }) {
       setImagePreview(null);
 
     } catch (error) {
-      console.error("Error converting image:", error);
+      console.error("Error:", error);
       alert("Gagal memproses gambar. Silakan coba lagi.");
     } finally {
       setIsUploading(false);
@@ -151,7 +123,7 @@ export default function CreateTradeModal({ isOpen, onClose, onSubmit }) {
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -160,58 +132,78 @@ export default function CreateTradeModal({ isOpen, onClose, onSubmit }) {
             initial={{ scale: 0.8, opacity: 0, y: 30 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.8, opacity: 0, y: 30 }}
-            transition={{ type: "spring", damping: 20, stiffness: 200 }}
-            className="relative bg-white/90 backdrop-blur-md border border-[var(--color-secondary)]/30 rounded-3xl shadow-2xl max-w-lg w-[90%] p-8 text-[var(--color-black)] max-h-[90vh] overflow-y-auto"
+            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            className="relative bg-white/95 backdrop-blur-md border border-gray-200/80 rounded-3xl shadow-2xl max-w-md w-full p-6 text-[var(--color-black)] max-h-[90vh] overflow-y-auto"
           >
-            {/* Close */}
-            <button
-              onClick={onClose}
-              disabled={isUploading}
-              className="absolute top-4 right-4 text-[var(--color-primary)] hover:text-[var(--color-secondary)] transition text-2xl disabled:opacity-50"
-            >
-              <FiX />
-            </button>
+            {/* Header */}
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-secondary)] p-2 rounded-xl">
+                  <FiCheckCircle className="text-white text-lg" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-[var(--color-black)]">
+                    Buat Barter Baru
+                  </h2>
+                  <p className="text-sm text-gray-600">Isi detail tawaran barter Anda</p>
+                </div>
+              </div>
+              <motion.button
+                whileHover={{ scale: 1.1, rotate: 90 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={onClose}
+                disabled={isUploading}
+                className="p-2 text-gray-400 hover:text-[var(--color-primary)] transition-colors disabled:opacity-50"
+              >
+                <FiX className="text-xl" />
+              </motion.button>
+            </div>
 
-            <h2 className="text-2xl font-bold text-[var(--color-primary)] mb-5 flex items-center gap-2">
-              <FiCheckCircle className="text-[var(--color-secondary)]" />
-              Create Barter Task
-            </h2>
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Upload Gambar */}
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Upload Gambar (Opsional - max 1MB)
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {/* Image Upload */}
+              <div className="space-y-3">
+                <label className="block text-sm font-semibold text-gray-700">
+                  Gambar Barter (Opsional)
                 </label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-[var(--color-primary)] transition-colors">
+                <div className="border-2 border-dashed border-gray-300 rounded-2xl p-6 text-center transition-all duration-300 hover:border-[var(--color-primary)] hover:bg-[var(--color-primary)]/5">
                   {imagePreview ? (
-                    <div className="relative">
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="relative"
+                    >
                       <img 
                         src={imagePreview} 
                         alt="Preview" 
-                        className="mx-auto h-32 object-cover rounded-lg"
+                        className="mx-auto h-32 w-32 object-cover rounded-xl shadow-md"
                       />
-                      <button
+                      <motion.button
                         type="button"
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
                         onClick={handleRemoveImage}
                         disabled={isUploading}
-                        className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 text-xs disabled:opacity-50"
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1.5 text-xs shadow-lg disabled:opacity-50"
                       >
                         <FiX />
-                      </button>
-                    </div>
+                      </motion.button>
+                    </motion.div>
                   ) : (
-                    <div>
-                      <FiImage className="mx-auto text-3xl text-gray-400 mb-2" />
-                      <p className="text-sm text-gray-500 mb-2">
+                    <motion.label
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className={`cursor-pointer block ${
+                        isUploading ? 'opacity-50 cursor-not-allowed' : ''
+                      }`}
+                    >
+                      <FiImage className="mx-auto text-4xl text-gray-400 mb-3" />
+                      <p className="text-sm text-gray-600 mb-2">
                         Klik untuk upload gambar
                       </p>
-                      <p className="text-xs text-gray-400 mb-2">
-                        JPEG, PNG, GIF, WebP (max 1MB)
+                      <p className="text-xs text-gray-500 mb-3">
+                        JPEG, PNG, GIF, WebP • Maks. 1MB
                       </p>
-                      <label className={`cursor-pointer bg-[var(--color-primary)] text-white px-4 py-2 rounded-lg inline-flex items-center gap-2 ${
-                        isUploading ? 'opacity-50 cursor-not-allowed' : ''
-                      }`}>
+                      <div className="bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-secondary)] text-white px-4 py-2.5 rounded-xl inline-flex items-center gap-2 text-sm font-medium">
                         <FiUpload />
                         Pilih Gambar
                         <input
@@ -221,89 +213,124 @@ export default function CreateTradeModal({ isOpen, onClose, onSubmit }) {
                           className="hidden"
                           disabled={isUploading}
                         />
-                      </label>
-                    </div>
+                      </div>
+                    </motion.label>
                   )}
                 </div>
               </div>
 
-              <input
-                name="title"
-                value={formData.title}
-                onChange={handleChange}
-                placeholder="Judul Barter"
-                className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
-                required
-                disabled={isUploading}
-              />
-              <textarea
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                placeholder="Deskripsi"
-                rows="3"
-                className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
-                required
-                disabled={isUploading}
-              />
+              {/* Form Fields */}
+              <div className="space-y-4">
+                <div className="relative">
+                  <FiType className="absolute left-3 top-3.5 text-gray-400 text-lg" />
+                  <input
+                    name="title"
+                    value={formData.title}
+                    onChange={handleChange}
+                    placeholder="Judul Barter"
+                    className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent bg-white/80 backdrop-blur-sm transition-all duration-300"
+                    required
+                    disabled={isUploading}
+                  />
+                </div>
 
-              <div className="grid md:grid-cols-2 gap-4">
-                <select
-                  name="neededSkill"
-                  value={formData.neededSkill}
-                  onChange={handleChange}
-                  className="p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
-                  required
-                  disabled={isUploading || skillsLoading}
-                >
-                  <option value="">
-                    {skillsLoading ? "Memuat skill..." : "Skill yang Dibutuhkan"}
-                  </option>
-                  {skills.map((skill, index) => (
-                    <option key={index} value={skill}>
-                      {skill}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <FiFileText className="absolute left-3 top-3.5 text-gray-400 text-lg" />
+                  <textarea
+                    name="description"
+                    value={formData.description}
+                    onChange={handleChange}
+                    placeholder="Deskripsi lengkap tentang barter yang Anda tawarkan..."
+                    rows="3"
+                    className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent bg-white/80 backdrop-blur-sm resize-none transition-all duration-300"
+                    required
+                    disabled={isUploading}
+                  />
+                </div>
 
-                <select
-                  name="offeredSkill"
-                  value={formData.offeredSkill}
-                  onChange={handleChange}
-                  className="p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
-                  required
-                  disabled={isUploading || skillsLoading}
-                >
-                  <option value="">
-                    {skillsLoading ? "Memuat skill..." : "Skill yang Ditawarkan"}
-                  </option>
-                  {skills.map((skill, index) => (
-                    <option key={index} value={skill}>
-                      {skill}
-                    </option>
-                  ))}
-                </select>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="relative">
+                    <select
+                      name="neededSkill"
+                      value={formData.neededSkill}
+                      onChange={handleChange}
+                      className="w-full p-3.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent bg-white/80 backdrop-blur-sm appearance-none transition-all duration-300"
+                      required
+                      disabled={isUploading || skillsLoading}
+                    >
+                      <option value="">
+                        {skillsLoading ? "Memuat skill..." : "Skill yang Dibutuhkan"}
+                      </option>
+                      {skills.map((skill, index) => (
+                        <option key={index} value={skill}>
+                          {skill}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="absolute right-3 top-3.5 text-gray-400 pointer-events-none">
+                      ▼
+                    </div>
+                  </div>
+
+                  <div className="relative">
+                    <select
+                      name="offeredSkill"
+                      value={formData.offeredSkill}
+                      onChange={handleChange}
+                      className="w-full p-3.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent bg-white/80 backdrop-blur-sm appearance-none transition-all duration-300"
+                      required
+                      disabled={isUploading || skillsLoading}
+                    >
+                      <option value="">
+                        {skillsLoading ? "Memuat skill..." : "Skill yang Ditawarkan"}
+                      </option>
+                      {skills.map((skill, index) => (
+                        <option key={index} value={skill}>
+                          {skill}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="absolute right-3 top-3.5 text-gray-400 pointer-events-none">
+                      ▼
+                    </div>
+                  </div>
+                </div>
+
+                <div className="relative">
+                  <FiMapPin className="absolute left-3 top-3.5 text-gray-400 text-lg" />
+                  <input
+                    name="location"
+                    value={formData.location}
+                    onChange={handleChange}
+                    placeholder="Lokasi (contoh: Jakarta, Remote, dll)"
+                    className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent bg-white/80 backdrop-blur-sm transition-all duration-300"
+                    required
+                    disabled={isUploading}
+                  />
+                </div>
               </div>
 
-              <input
-                name="location"
-                value={formData.location}
-                onChange={handleChange}
-                placeholder="Lokasi"
-                className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
-                required
-                disabled={isUploading}
-              />
-
-              <button
+              {/* Submit Button */}
+              <motion.button
                 type="submit"
                 disabled={isUploading || skillsLoading}
-                className={`w-full py-3 mt-2 bg-[var(--color-primary)] text-white font-semibold rounded-xl hover:opacity-90 transition ${
-                  isUploading || skillsLoading ? 'opacity-50 cursor-not-allowed' : ''
+                whileHover={{ scale: isUploading ? 1 : 1.02 }}
+                whileTap={{ scale: isUploading ? 1 : 0.98 }}
+                className={`w-full py-4 bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary)]/90 text-white font-bold rounded-xl transition-all duration-300 shadow-lg ${
+                  isUploading || skillsLoading 
+                    ? 'opacity-50 cursor-not-allowed' 
+                    : 'hover:from-[var(--color-secondary)] hover:to-[var(--color-secondary)]/90 hover:shadow-xl'
                 }`}
               >
-                {isUploading ? 'Memproses...' : 'Submit Task'}
-              </button>
+                {isUploading ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Membuat Barter...
+                  </div>
+                ) : (
+                  "Buat Tawaran Barter"
+                )}
+              </motion.button>
             </form>
           </motion.div>
         </motion.div>

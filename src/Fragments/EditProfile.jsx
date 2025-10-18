@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import { auth, db } from "../firebase/firebase-config";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { updatePassword } from "firebase/auth";
-import { FiCamera, FiX } from "react-icons/fi";
+import { FiCamera, FiX, FiEdit, FiLock, FiSave, FiUser, FiMapPin, FiMail, FiAward } from "react-icons/fi";
 
 export default function EditProfile() {
   const [userData, setUserData] = useState(null);
@@ -59,14 +60,12 @@ export default function EditProfile() {
   const handleAvatarChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Validasi tipe file
       const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
       if (!validTypes.includes(file.type)) {
         alert('Hanya file gambar (JPEG, PNG, GIF, WebP) yang diizinkan!');
         return;
       }
 
-      // Validasi ukuran file (max 1MB)
       if (file.size > 1 * 1024 * 1024) {
         alert('Ukuran file maksimal 1MB!');
         return;
@@ -97,8 +96,11 @@ export default function EditProfile() {
     canvas.height = 200;
     const ctx = canvas.getContext('2d');
     
-    // Background color
-    ctx.fillStyle = '#4F46E5'; // Warna primary
+    // Background gradient
+    const gradient = ctx.createLinearGradient(0, 0, 200, 200);
+    gradient.addColorStop(0, '#0b4e65');
+    gradient.addColorStop(1, '#fbc13a');
+    ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
     // Text
@@ -123,7 +125,6 @@ export default function EditProfile() {
     try {
       const userRef = doc(db, "users", user.uid);
       
-      // Generate default avatar jika avatar dihapus
       let finalAvatar = editedData.avatar;
       if (!finalAvatar && editedData.institution) {
         finalAvatar = generateDefaultAvatar(editedData.institution);
@@ -138,11 +139,11 @@ export default function EditProfile() {
       setUserData(updateData);
       setAvatarPreview(finalAvatar);
       setIsEditing(false);
-      setSuccess("Profil berhasil diperbarui!");
+      setSuccess("🎉 Profil berhasil diperbarui!");
       setTimeout(() => setSuccess(""), 3000);
     } catch (error) {
       console.error("Gagal menyimpan profil:", error);
-      setError("Gagal menyimpan profil. Silakan coba lagi.");
+      setError("❌ Gagal menyimpan profil. Silakan coba lagi.");
     }
   };
 
@@ -155,16 +156,16 @@ export default function EditProfile() {
     e.preventDefault();
     setError("");
     if (newPassword !== confirmPassword) {
-      setError("Password baru dan konfirmasi tidak cocok.");
+      setError("🔒 Password baru dan konfirmasi tidak cocok.");
       return;
     }
     if (newPassword.length < 6) {
-      setError("Password baru harus minimal 6 karakter.");
+      setError("🔒 Password baru harus minimal 6 karakter.");
       return;
     }
     const user = auth.currentUser;
     if (!user) {
-      setError("User tidak terautentikasi.");
+      setError("🔒 User tidak terautentikasi.");
       return;
     }
     try {
@@ -173,63 +174,116 @@ export default function EditProfile() {
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-      setSuccess("Password berhasil diubah!");
+      setSuccess("✅ Password berhasil diubah!");
       setTimeout(() => setSuccess(""), 3000);
     } catch (error) {
       if (error.code === "auth/requires-recent-login") {
-        setError("Silakan login ulang untuk mengubah password.");
+        setError("🔒 Silakan login ulang untuk mengubah password.");
       } else if (error.code === "auth/weak-password") {
-        setError("Password terlalu lemah.");
+        setError("🔒 Password terlalu lemah.");
       } else {
-        setError("Gagal mengubah password. Silakan coba lagi.");
+        setError("❌ Gagal mengubah password. Silakan coba lagi.");
       }
     }
   };
 
   if (loading)
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="flex items-center gap-3">
-          <div className="w-6 h-6 border-4 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-base sm:text-lg text-[var(--color-black)]">
+      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-[var(--color-white)] to-gray-50">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center gap-3"
+        >
+          <div className="w-8 h-8 border-4 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-lg font-medium text-[var(--color-black)]">
             Memuat data profil...
           </p>
-        </div>
+        </motion.div>
       </div>
     );
 
   if (!userData)
     return (
-      <div className="flex items-center justify-center h-screen">
-        <p className="text-base sm:text-lg text-red-500 font-medium">
-          Data profil tidak ditemukan.
-        </p>
+      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-[var(--color-white)] to-gray-50">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center"
+        >
+          <div className="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <FiX className="text-red-500 text-2xl" />
+          </div>
+          <p className="text-lg font-medium text-red-500">
+            Data profil tidak ditemukan.
+          </p>
+        </motion.div>
       </div>
     );
 
   return (
-    <div className="min-h-screen bg-[var(--color-white)]">
-      <div className="px-4 py-8 sm:px-6 md:px-8 lg:px-12 max-w-5xl mx-auto">
-        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--color-black)] mb-6 sm:mb-8 text-center md:text-left">
-          Profil Anda
-        </h2>
-        <div className="bg-[var(--color-white)] rounded-2xl shadow-lg p-4 sm:p-6 md:p-8">
-          {/* Notifikasi */}
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4 text-sm sm:text-base">
-              {error}
-            </div>
-          )}
-          {success && (
-            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-4 text-sm sm:text-base">
-              {success}
-            </div>
-          )}
+    <div className="min-h-screen bg-gradient-to-br from-[var(--color-white)] to-gray-50">
+      <div className="px-4 py-8 sm:px-6 md:px-8 lg:px-12 max-w-4xl mx-auto">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center mb-8"
+        >
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-secondary)] rounded-3xl mb-4">
+            <FiUser className="text-white text-2xl" />
+          </div>
+          <h1 className="text-3xl sm:text-4xl font-bold text-[var(--color-black)] mb-3">
+            Kelola Profil Anda
+          </h1>
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            Personalisasi profil Anda untuk pengalaman barter yang lebih baik
+          </p>
+        </motion.div>
 
-          {/* Header Info */}
-          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 border-b border-gray-200 pb-4 sm:pb-6 mb-4 sm:mb-6 text-center sm:text-left">
-            <div className="relative">
-              <div className="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-full border-4 border-[var(--color-secondary)] overflow-hidden bg-gray-200 flex items-center justify-center">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl p-6 sm:p-8 border border-gray-200/60"
+        >
+          {/* Notifikasi */}
+          <AnimatePresence>
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-6 flex items-center gap-3"
+              >
+                <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center">
+                  <FiX className="text-red-500 text-sm" />
+                </div>
+                <span className="text-sm font-medium">{error}</span>
+              </motion.div>
+            )}
+            {success && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl mb-6 flex items-center gap-3"
+              >
+                <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
+                  <FiSave className="text-green-500 text-sm" />
+                </div>
+                <span className="text-sm font-medium">{success}</span>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Avatar & Basic Info */}
+          <div className="flex flex-col lg:flex-row items-center lg:items-start gap-6 lg:gap-8 mb-8">
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              className="relative group"
+            >
+              <div className="w-32 h-32 lg:w-40 lg:h-40 rounded-2xl border-4 border-[var(--color-secondary)] overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 shadow-lg">
                 {avatarPreview ? (
                   <>
                     <img 
@@ -241,23 +295,28 @@ export default function EditProfile() {
                       <button
                         type="button"
                         onClick={handleRemoveAvatar}
-                        className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 text-xs"
+                        className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1.5 hover:bg-red-600 transition-colors"
                       >
-                        <FiX />
+                        <FiX className="text-sm" />
                       </button>
                     )}
                   </>
                 ) : (
-                  <div className="w-full h-full bg-[var(--color-primary)] flex items-center justify-center">
-                    <span className="text-white text-2xl sm:text-3xl font-bold">
+                  <div className="w-full h-full bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-secondary)] flex items-center justify-center">
+                    <span className="text-white text-4xl lg:text-5xl font-bold">
                       {userData.institution?.charAt(0)?.toUpperCase() || 'U'}
                     </span>
                   </div>
                 )}
               </div>
+              
               {isEditing && (
-                <label className="absolute bottom-0 right-0 bg-[var(--color-primary)] text-white rounded-full p-2 cursor-pointer hover:bg-[var(--color-secondary)] transition-colors">
-                  <FiCamera className="text-sm" />
+                <motion.label
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  className="absolute bottom-2 right-2 bg-[var(--color-primary)] text-white rounded-full p-3 cursor-pointer hover:bg-[var(--color-secondary)] transition-all shadow-lg"
+                >
+                  <FiCamera className="text-lg" />
                   <input
                     type="file"
                     accept="image/jpeg, image/jpg, image/png, image/gif, image/webp"
@@ -265,194 +324,290 @@ export default function EditProfile() {
                     className="hidden"
                     disabled={isUploadingAvatar}
                   />
-                </label>
+                </motion.label>
               )}
+              
               {isUploadingAvatar && (
-                <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-full">
-                  <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                <div className="absolute inset-0 bg-black bg-opacity-50 rounded-2xl flex items-center justify-center">
+                  <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                 </div>
               )}
-            </div>
-            <div className="flex-1 w-full">
-              <h3 className="text-lg sm:text-xl md:text-2xl font-semibold text-[var(--color-black)]">
+            </motion.div>
+
+            <div className="flex-1 text-center lg:text-left space-y-4">
+              <div>
+                <h3 className="text-2xl lg:text-3xl font-bold text-[var(--color-black)] mb-2">
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      name="institution"
+                      value={editedData.institution || ""}
+                      onChange={handleInputChange}
+                      placeholder="Nama Instansi/Perseorangan"
+                      className="w-full bg-transparent border-b-2 border-gray-300 focus:border-[var(--color-primary)] outline-none text-center lg:text-left text-2xl lg:text-3xl font-bold"
+                    />
+                  ) : (
+                    userData.institution
+                  )}
+                </h3>
+                <p className="text-gray-500 text-lg flex items-center justify-center lg:justify-start gap-2">
+                  <FiMail className="text-[var(--color-primary)]" />
+                  {userData.email}
+                </p>
+              </div>
+              
+              <div>
+                <p className="text-sm font-semibold text-gray-500 mb-2 flex items-center justify-center lg:justify-start gap-2">
+                  <FiAward className="text-[var(--color-secondary)]" />
+                  Keahlian Utama
+                </p>
                 {isEditing ? (
                   <input
                     type="text"
-                    name="institution"
-                    value={editedData.institution || ""}
+                    name="skill"
+                    value={editedData.skill || ""}
                     onChange={handleInputChange}
-                    className="w-full bg-transparent border-b border-gray-300 focus:border-[var(--color-primary)] outline-none text-center sm:text-left text-lg sm:text-xl md:text-2xl"
+                    placeholder="Contoh: Web Development, Desain Grafis, dll."
+                    className="w-full bg-transparent border-b-2 border-gray-300 focus:border-[var(--color-primary)] outline-none text-center lg:text-left text-lg font-medium text-[var(--color-primary)]"
                   />
                 ) : (
-                  userData.institution
+                  <p className="text-lg font-medium text-[var(--color-primary)]">
+                    {userData.skill || "Belum diisi"}
+                  </p>
                 )}
-              </h3>
-              <p className="text-gray-500 text-sm sm:text-base mt-1 break-words">
-                {userData.email}
-              </p>
-              {isEditing ? (
-                <input
-                  type="text"
-                  name="skill"
-                  value={editedData.skill || ""}
-                  onChange={handleInputChange}
-                  className="text-sm sm:text-base font-medium text-[var(--color-primary)] mt-2 bg-transparent border-b border-gray-300 focus:border-[var(--color-primary)] outline-none w-full text-center sm:text-left"
-                />
-              ) : (
-                <p className="text-sm sm:text-base font-medium text-[var(--color-primary)] mt-2 break-words">
-                  {userData.skill}
-                </p>
-              )}
+              </div>
             </div>
           </div>
 
-          {/* Detail Info */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-            <div>
-              <p className="text-sm font-semibold text-gray-500">
-                Instansi / Perseorangan
-              </p>
-              {isEditing ? (
-                <input
-                  type="text"
-                  name="institution"
-                  value={editedData.institution || ""}
-                  onChange={handleInputChange}
-                  className="w-full mt-1 bg-transparent border-b border-gray-300 focus:border-[var(--color-primary)] outline-none text-sm sm:text-base"
-                />
-              ) : (
-                <p className="text-[var(--color-black)] mt-1 break-words text-sm sm:text-base">
-                  {userData.institution}
-                </p>
-              )}
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-gray-500">Keahlian</p>
-              {isEditing ? (
-                <textarea
-                  name="skill"
-                  value={editedData.skill || ""}
-                  onChange={handleInputChange}
-                  rows={2}
-                  className="w-full mt-1 bg-transparent border-b border-gray-300 focus:border-[var(--color-primary)] outline-none resize-none text-sm sm:text-base"
-                />
-              ) : (
-                <p className="text-[var(--color-black)] mt-1 break-words text-sm sm:text-base">
-                  {userData.skill}
-                </p>
-              )}
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-gray-500">Alamat</p>
-              {isEditing ? (
-                <textarea
-                  name="address"
-                  value={editedData.address || ""}
-                  onChange={handleInputChange}
-                  rows={3}
-                  className="w-full mt-1 bg-transparent border border-gray-300 rounded-md p-2 focus:border-[var(--color-primary)] outline-none resize-y text-sm sm:text-base"
-                />
-              ) : (
-                <p className="text-[var(--color-black)] mt-1 break-words text-sm sm:text-base">
-                  {userData.address}
-                </p>
-              )}
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-gray-500">Email</p>
-              <p className="text-[var(--color-black)] mt-1 break-words text-sm sm:text-base">
-                {userData.email}
-              </p>
-            </div>
+          {/* Detail Info Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl p-6 border border-blue-200"
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                  <FiUser className="text-blue-600 text-lg" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-blue-800">Instansi / Perseorangan</h4>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      name="institution"
+                      value={editedData.institution || ""}
+                      onChange={handleInputChange}
+                      className="w-full mt-1 bg-transparent border-b border-blue-300 focus:border-blue-500 outline-none"
+                    />
+                  ) : (
+                    <p className="text-[var(--color-black)] mt-1">
+                      {userData.institution}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-6 border border-green-200"
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
+                  <FiAward className="text-green-600 text-lg" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-green-800">Keahlian</h4>
+                  {isEditing ? (
+                    <textarea
+                      name="skill"
+                      value={editedData.skill || ""}
+                      onChange={handleInputChange}
+                      rows={2}
+                      placeholder="Jelaskan keahlian Anda..."
+                      className="w-full mt-1 bg-transparent border-b border-green-300 focus:border-green-500 outline-none resize-none"
+                    />
+                  ) : (
+                    <p className="text-[var(--color-black)] mt-1">
+                      {userData.skill || "Belum diisi"}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              className="bg-gradient-to-br from-purple-50 to-violet-50 rounded-2xl p-6 border border-purple-200 lg:col-span-2"
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+                  <FiMapPin className="text-purple-600 text-lg" />
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-semibold text-purple-800">Alamat</h4>
+                  {isEditing ? (
+                    <textarea
+                      name="address"
+                      value={editedData.address || ""}
+                      onChange={handleInputChange}
+                      rows={3}
+                      placeholder="Masukkan alamat lengkap Anda..."
+                      className="w-full mt-1 bg-white/50 border border-purple-300 rounded-lg p-3 focus:border-purple-500 outline-none resize-none"
+                    />
+                  ) : (
+                    <p className="text-[var(--color-black)] mt-1">
+                      {userData.address || "Belum diisi"}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </motion.div>
           </div>
 
-          {/* Tombol Aksi */}
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-8 sm:mt-10">
+          {/* Action Buttons */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200"
+          >
             {isEditing ? (
               <>
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                   onClick={handleSaveProfile}
                   disabled={isUploadingAvatar}
-                  className="flex-1 bg-[var(--color-primary)] text-white px-4 sm:px-5 py-2 sm:py-3 rounded-lg font-medium hover:bg-[var(--color-secondary)] transition-all shadow-md text-sm sm:text-base disabled:opacity-50"
+                  className="flex-1 bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary)]/90 text-white px-6 py-4 rounded-xl font-semibold hover:from-[var(--color-secondary)] hover:to-[var(--color-secondary)]/90 transition-all shadow-lg flex items-center justify-center gap-3 disabled:opacity-50"
                 >
-                  {isUploadingAvatar ? "Mengupload..." : "Simpan"}
-                </button>
-                <button
+                  <FiSave className="text-xl" />
+                  {isUploadingAvatar ? "Mengupload..." : "Simpan Perubahan"}
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                   onClick={handleEditProfile}
-                  className="flex-1 bg-gray-200 text-[var(--color-black)] px-4 sm:px-5 py-2 sm:py-3 rounded-lg font-medium hover:bg-gray-300 transition-all text-sm sm:text-base"
+                  className="flex-1 bg-gray-200 text-[var(--color-black)] px-6 py-4 rounded-xl font-semibold hover:bg-gray-300 transition-all flex items-center justify-center gap-3"
                 >
-                  Batal
-                </button>
+                  <FiX className="text-xl" />
+                  Batalkan
+                </motion.button>
               </>
             ) : (
               <>
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                   onClick={handleEditProfile}
-                  className="flex-1 bg-[var(--color-primary)] text-white px-4 sm:px-5 py-2 sm:py-3 rounded-lg font-medium hover:bg-[var(--color-secondary)] transition-all shadow-md text-sm sm:text-base"
+                  className="flex-1 bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary)]/90 text-white px-6 py-4 rounded-xl font-semibold hover:from-[var(--color-secondary)] hover:to-[var(--color-secondary)]/90 transition-all shadow-lg flex items-center justify-center gap-3"
                 >
+                  <FiEdit className="text-xl" />
                   Edit Profil
-                </button>
-                <button
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                   onClick={() => setShowPasswordModal(true)}
-                  className="flex-1 bg-[var(--color-secondary)] text-white px-4 sm:px-5 py-2 sm:py-3 rounded-lg font-medium hover:bg-[var(--color-primary)] transition-all shadow-md text-sm sm:text-base"
+                  className="flex-1 bg-gradient-to-r from-[var(--color-secondary)] to-[var(--color-secondary)]/90 text-white px-6 py-4 rounded-xl font-semibold hover:from-[var(--color-primary)] hover:to-[var(--color-primary)]/90 transition-all shadow-lg flex items-center justify-center gap-3"
                 >
+                  <FiLock className="text-xl" />
                   Ubah Password
-                </button>
+                </motion.button>
               </>
             )}
-          </div>
+          </motion.div>
+        </motion.div>
 
-          {/* Modal Ubah Password */}
+        {/* Modal Ubah Password */}
+        <AnimatePresence>
           {showPasswordModal && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 sm:p-6">
-              <div className="bg-white rounded-2xl p-4 sm:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-                <h3 className="text-lg sm:text-xl font-bold text-[var(--color-black)] mb-4 text-center sm:text-left">
-                  Ubah Password
-                </h3>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+              onClick={() => setShowPasswordModal(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.8, opacity: 0 }}
+                className="bg-white rounded-3xl p-6 w-full max-w-md"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="text-center mb-6">
+                  <div className="w-16 h-16 bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-secondary)] rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <FiLock className="text-white text-2xl" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-[var(--color-black)] mb-2">
+                    Ubah Password
+                  </h3>
+                  <p className="text-gray-600">
+                    Masukkan password baru yang aman untuk akun Anda
+                  </p>
+                </div>
+
                 <form onSubmit={handlePasswordChange} className="space-y-4">
                   {[
                     {
                       label: "Password Saat Ini",
                       value: currentPassword,
                       setValue: setCurrentPassword,
+                      icon: FiLock,
                     },
                     {
                       label: "Password Baru",
                       value: newPassword,
                       setValue: setNewPassword,
+                      icon: FiLock,
                     },
                     {
                       label: "Konfirmasi Password Baru",
                       value: confirmPassword,
                       setValue: setConfirmPassword,
+                      icon: FiLock,
                     },
                   ].map((field, i) => (
                     <div key={i}>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
                         {field.label}
                       </label>
-                      <input
-                        type="password"
-                        value={field.value}
-                        onChange={(e) => field.setValue(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-[var(--color-primary)] outline-none text-sm sm:text-base"
-                        required
-                      />
+                      <div className="relative">
+                        <field.icon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                        <input
+                          type="password"
+                          value={field.value}
+                          onChange={(e) => field.setValue(e.target.value)}
+                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20 outline-none transition-all"
+                          required
+                        />
+                      </div>
                     </div>
                   ))}
+                  
                   {error && (
-                    <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-lg text-sm">
-                      {error}
-                    </div>
-                  )}
-                  <div className="flex flex-col sm:flex-row gap-3 pt-4">
-                    <button
-                      type="submit"
-                      className="flex-1 bg-[var(--color-primary)] text-white py-2 rounded-lg font-medium hover:bg-[var(--color-secondary)] transition-all text-sm sm:text-base"
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm"
                     >
-                      Simpan
-                    </button>
-                    <button
+                      {error}
+                    </motion.div>
+                  )}
+                  
+                  <div className="flex gap-3 pt-4">
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      type="submit"
+                      className="flex-1 bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary)]/90 text-white py-3 rounded-xl font-semibold hover:from-[var(--color-secondary)] hover:to-[var(--color-secondary)]/90 transition-all"
+                    >
+                      Simpan Password
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
                       type="button"
                       onClick={() => {
                         setShowPasswordModal(false);
@@ -461,16 +616,16 @@ export default function EditProfile() {
                         setNewPassword("");
                         setConfirmPassword("");
                       }}
-                      className="flex-1 bg-gray-200 text-[var(--color-black)] py-2 rounded-lg font-medium hover:bg-gray-300 transition-all text-sm sm:text-base"
+                      className="flex-1 bg-gray-200 text-[var(--color-black)] py-3 rounded-xl font-semibold hover:bg-gray-300 transition-all"
                     >
                       Batal
-                    </button>
+                    </motion.button>
                   </div>
                 </form>
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
           )}
-        </div>
+        </AnimatePresence>
       </div>
     </div>
   );

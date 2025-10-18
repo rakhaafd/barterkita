@@ -1,120 +1,154 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { FiFacebook, FiInstagram, FiTwitter, FiMail } from "react-icons/fi";
+import { 
+  FiMail, 
+  FiLinkedin,
+  FiInstagram,
+  FiArrowUp
+} from "react-icons/fi";
+import { FaExchangeAlt } from "react-icons/fa";
+import { motion } from "framer-motion";
 
 const Footer = () => {
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
-    <footer className="w-full bg-[var(--color-primary)] text-[var(--color-white)] pt-12 pb-6 mt-20 relative overflow-hidden">
-      {/* Gradient Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none"></div>
+    <footer className="relative bg-gradient-to-br from-[var(--color-primary)] to-[#0d5a7a] text-white">
+      {/* Main Content */}
+      <div className="relative max-w-7xl mx-auto px-6 py-12">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          {/* Brand Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="md:col-span-2"
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="bg-gradient-to-br from-[var(--color-secondary)] to-[var(--color-primary)] p-2 rounded-xl">
+                <FaExchangeAlt className="text-white text-lg" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-black bg-gradient-to-r from-white to-[var(--color-secondary)] bg-clip-text text-transparent">
+                  BarterKita
+                </h2>
+                <p className="text-sm text-gray-300">Exchange Skills, Create Value</p>
+              </div>
+            </div>
+            
+            <p className="text-gray-300 leading-relaxed mb-6 max-w-md">
+              Platform barter skill yang mempertemukan talenta kreatif untuk saling bertukar keahlian.
+            </p>
+            
+            <div className="flex items-center gap-3">
+              {[
+                { icon: FiLinkedin, href: "https://linkedin.com", label: "LinkedIn" },
+                { icon: FiInstagram, href: "https://instagram.com", label: "Instagram" },
+              ].map((social, index) => (
+                <motion.a
+                  key={index}
+                  href={social.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  whileHover={{ scale: 1.1, y: -2 }}
+                  whileTap={{ scale: 0.9 }}
+                  className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300"
+                  title={social.label}
+                >
+                  <social.icon size={16} />
+                </motion.a>
+              ))}
+            </div>
+          </motion.div>
 
-      {/* Main Container */}
-      <div className="relative max-w-6xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-12 z-10">
-        {/* Logo & Intro */}
-        <div>
-          <h2 className="text-2xl font-bold tracking-wide mb-3">
-            Barter
-            <span className="text-[var(--color-secondary)]">Kita</span>
-          </h2>
-          <p className="text-sm text-gray-200 leading-relaxed">
-            Platform barter skill yang mempertemukan individu kreatif untuk
-            saling bertukar keahlian tanpa batas. Bangun kolaborasi nyata, bukan
-            hanya transaksi.
-          </p>
+          {/* Quick Links */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
+          >
+            <h3 className="font-semibold text-lg mb-4 text-white">Navigasi</h3>
+            <ul className="space-y-2">
+              {[
+                { name: "Home", path: "/" },
+                { name: "Marketplace", path: "/marketplace" },
+                { name: "Profile", path: "/profile" },
+              ].map((link, index) => (
+                <li key={link.name}>
+                  <Link
+                    to={link.path}
+                    className="text-gray-300 hover:text-white transition-colors duration-300 text-sm"
+                  >
+                    {link.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </motion.div>
+
+          {/* Legal & Support */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.2 }}
+          >
+            <h3 className="font-semibold text-lg mb-4 text-white">Support</h3>
+            <ul className="space-y-2">
+              {[
+                { name: "Terms of Service", path: "/profile" },
+                { name: "Privacy Policy", path: "/profile" },
+                { name: "Contact Support", path: "mailto:hello@barterkita.id" },
+              ].map((link, index) => (
+                <li key={link.name}>
+                  {link.path.startsWith('mailto:') ? (
+                    <a
+                      href={link.path}
+                      className="text-gray-300 hover:text-white transition-colors duration-300 text-sm"
+                    >
+                      {link.name}
+                    </a>
+                  ) : (
+                    <Link
+                      to={link.path}
+                      className="text-gray-300 hover:text-white transition-colors duration-300 text-sm"
+                    >
+                      {link.name}
+                    </Link>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </motion.div>
         </div>
 
-        {/* Navigation Links */}
-        <div>
-          <h3 className="font-semibold text-[var(--color-secondary)] mb-4 uppercase tracking-wide">
-            Navigasi
-          </h3>
-          <ul className="space-y-2 text-sm">
-            <li>
-              <Link
-                to="/"
-                className="hover:text-[var(--color-secondary)] transition-colors"
-              >
-                Home
-              </Link>
-            </li>
-            <li>
-              <Link
-                to="/marketplace"
-                className="hover:text-[var(--color-secondary)] transition-colors"
-              >
-                Marketplace
-              </Link>
-            </li>
-            <li>
-              <Link
-                to="/profile"
-                className="hover:text-[var(--color-secondary)] transition-colors"
-              >
-                Profile
-              </Link>
-            </li>
-            <li>
-              <Link
-                to="/faq"
-                className="hover:text-[var(--color-secondary)] transition-colors"
-              >
-                FAQ
-              </Link>
-            </li>
-          </ul>
-        </div>
-
-        {/* Contact & Social */}
-        <div>
-          <h3 className="font-semibold text-[var(--color-secondary)] mb-4 uppercase tracking-wide">
-            Hubungi Kami
-          </h3>
-          <p className="text-sm text-gray-200 mb-3">
-            Ada pertanyaan? Kirim pesan atau hubungi kami lewat media sosial.
-          </p>
-
-          <div className="flex items-center gap-4 mt-3">
-            <a
-              href="mailto:hello@barterkita.id"
-              className="p-2 rounded-full bg-[var(--color-secondary)]/20 hover:bg-[var(--color-secondary)]/40 transition"
-            >
-              <FiMail size={18} />
-            </a>
-            <a
-              href="https://facebook.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-2 rounded-full bg-[var(--color-secondary)]/20 hover:bg-[var(--color-secondary)]/40 transition"
-            >
-              <FiFacebook size={18} />
-            </a>
-            <a
-              href="https://twitter.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-2 rounded-full bg-[var(--color-secondary)]/20 hover:bg-[var(--color-secondary)]/40 transition"
-            >
-              <FiTwitter size={18} />
-            </a>
-            <a
-              href="https://instagram.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-2 rounded-full bg-[var(--color-secondary)]/20 hover:bg-[var(--color-secondary)]/40 transition"
-            >
-              <FiInstagram size={18} />
-            </a>
+        {/* Bottom Section */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          className="border-t border-white/20 mt-8 pt-6 flex flex-col md:flex-row justify-between items-center"
+        >
+          <div className="text-gray-300 text-sm text-center md:text-left mb-4 md:mb-0">
+            © {new Date().getFullYear()} BarterKita. All rights reserved.
           </div>
-        </div>
-      </div>
-
-      {/* Divider & Bottom Text */}
-      <div className="border-t border-white/20 mt-10 pt-4 text-center text-sm text-gray-300">
-        © {new Date().getFullYear()}{" "}
-        <span className="font-semibold text-[var(--color-secondary)]">
-          BarterKita
-        </span>
-        . All rights reserved.
+          
+          <div className="flex items-center gap-4">
+            {/* Scroll to Top Button */}
+            <motion.button
+              onClick={scrollToTop}
+              whileHover={{ scale: 1.1, y: -2 }}
+              whileTap={{ scale: 0.9 }}
+              className="p-2 bg-[var(--color-secondary)] text-[var(--color-primary)] rounded-lg hover:bg-white transition-colors"
+              title="Back to top"
+            >
+              <FiArrowUp size={16} />
+            </motion.button>
+          </div>
+        </motion.div>
       </div>
     </footer>
   );

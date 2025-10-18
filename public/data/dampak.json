@@ -3,18 +3,18 @@
     "id": 1,
     "title": "Sosial",
     "description": "Membangun komunitas yang saling mendukung, berbagi keahlian, dan saling membantu untuk mencapai tujuan bersama.",
-    "image": "https://cdn-icons-png.flaticon.com/512/9122/9122885.png"
+    "image": "/data/deal.jpg"
   },
   {
     "id": 2,
     "title": "Ekonomi",
     "description": "Memungkinkan pertukaran skill tanpa uang, menghemat biaya, serta memberikan kesempatan belajar lintas profesi.",
-    "image": "https://cdn-icons-png.flaticon.com/512/888/888879.png"
+    "image": "/data/trust.jpg"
   },
   {
     "id": 3,
     "title": "Reputasi",
     "description": "Menunjukkan kredibilitas dan kontribusi pengguna dalam komunitas melalui sistem ulasan dan reputasi yang transparan.",
-    "image": "https://cdn-icons-png.flaticon.com/512/3820/3820320.png"
+    "image": "/data/reputation.jpg"
   }
 ]

@@ -3,24 +3,24 @@
     "id": 1,
     "name": "Rina Oktaviani",
     "text": "BarterKita membantu saya menukar keahlian desain dengan jasa penerjemah bahasa Jepang. Prosesnya cepat dan transparan!",
-    "img": "/assets/user1.jpg"
+    "img": "https://images.unsplash.com/photo-1607746882042-944635dfe10e?crop=faces&fit=crop&w=400&h=400"
   },
   {
     "id": 2,
     "name": "Dimas Pratama",
     "text": "Platform ini benar-benar inovatif. Saya berhasil menukar skill coding dengan pelatihan public speaking.",
-    "img": "/assets/user2.jpg"
+    "img": "https://images.unsplash.com/photo-1599566150163-29194dcaad36?crop=faces&fit=crop&w=400&h=400"
   },
   {
     "id": 3,
     "name": "Anisa Wulandari",
     "text": "UI-nya mudah digunakan dan komunitasnya positif. Pengalaman barter jadi menyenangkan.",
-    "img": "/assets/user3.jpg"
+    "img": "https://images.unsplash.com/photo-1502685104226-ee32379fefbe?crop=faces&fit=crop&w=400&h=400"
   },
   {
     "id": 4,
     "name": "Bagas Ardiansyah",
     "text": "Fitur chat-nya membantu koordinasi barter jadi lancar. Sangat direkomendasikan!",
-    "img": "/assets/user4.jpg"
+    "img": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?crop=faces&fit=crop&w=400&h=400"
   }
 ]

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   collection,
   query,
@@ -22,6 +23,7 @@ import DetailTradeModal from "../Elements/DetailTradeModal";
 import Terms from "../Fragments/Terms";
 import { showConfirmation, showSuccess, showError } from "../Elements/Alert";
 import Privacy from "./Privacy";
+import { FiPlus, FiRefreshCw, FiPackage, FiDownload, FiUpload, FiSearch } from "react-icons/fi";
 
 export default function BarterList() {
   const [activeTab, setActiveTab] = useState("baru");
@@ -34,6 +36,8 @@ export default function BarterList() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -147,7 +151,9 @@ export default function BarterList() {
   };
 
   const refreshData = async () => {
+    setRefreshing(true);
     await Promise.all([fetchIncomingOffers(), fetchAssignedOffers()]);
+    setRefreshing(false);
   };
 
   useEffect(() => {
@@ -204,7 +210,7 @@ export default function BarterList() {
     setIsDetailOpen(true);
   };
 
-  // Filter data berdasarkan tab
+  // Filter data berdasarkan tab dan search term
   const filteredData =
     activeTab === "masuk"
       ? incomingOffers
@@ -212,72 +218,237 @@ export default function BarterList() {
         ? assignedOffers
         : barterData;
 
+  const searchedData = filteredData.filter(trade =>
+    trade.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    trade.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    trade.requiredSkill?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    trade.offeredSkill?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   const getCount = (tab) => {
     if (tab === "masuk") return incomingOffers.length;
     if (tab === "diambil") return assignedOffers.length;
     return barterData.length;
   };
 
+  const tabConfig = [
+    { 
+      key: "baru", 
+      label: "Tawaran Anda", 
+      icon: FiPackage,
+      description: "Barter yang Anda buat",
+      color: "from-blue-500 to-cyan-500"
+    },
+    { 
+      key: "masuk", 
+      label: "Tawaran Masuk", 
+      icon: FiDownload,
+      description: "Tawaran dari pengguna lain",
+      color: "from-green-500 to-emerald-500"
+    },
+    { 
+      key: "diambil", 
+      label: "Tawaran Diambil", 
+      icon: FiUpload,
+      description: "Barter yang Anda ambil",
+      color: "from-purple-500 to-violet-500"
+    },
+  ];
+
   return (
-    <div className="min-h-screen bg-[var(--color-white)] pl-4 md:pl-12 px-4 sm:px-6 md:px-8 py-6 md:py-8">
-      <h1 className="text-xl sm:text-2xl font-bold mb-6 text-[var(--color-black)] text-center sm:text-left">
-        Daftar Barter Anda
-      </h1>
-      <div className="flex flex-wrap justify-center sm:justify-start gap-3 mb-8">
-        {[
-          { key: "baru", label: "Tawaran Barter Anda" },
-          { key: "masuk", label: "Tawaran Masuk" },
-          { key: "diambil", label: "Tawaran Diambil" },
-        ].map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`flex items-center justify-between w-full sm:w-auto px-4 py-2.5 rounded-lg border transition-all duration-300 text-sm sm:text-base ${
-              activeTab === tab.key
-                ? "bg-[var(--color-secondary)] text-white shadow-md border-[var(--color-secondary)]"
-                : "bg-gray-50 hover:bg-gray-100 text-gray-800 border-gray-200"
-            }`}
-          >
-            <span>{tab.label}</span>
-            <span
-              className={`ml-2 px-2 py-0.5 rounded-full text-xs sm:text-sm font-semibold ${
-                activeTab === tab.key
-                  ? "bg-white text-[var(--color-secondary)]"
-                  : "bg-gray-200 text-gray-700"
+    <div className="min-h-screen bg-gradient-to-br from-[var(--color-white)] to-gray-50 pl-4 md:pl-12 px-4 sm:px-6 md:px-8 py-6 md:py-8">
+      {/* Header Section */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mb-8"
+      >
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+          <div>
+            <h1 className="text-3xl sm:text-4xl font-bold text-[var(--color-black)] mb-2">
+              Kelola Barter Anda 🎯
+            </h1>
+            <p className="text-lg text-gray-600">
+              Pantau semua aktivitas barter dalam satu tempat
+            </p>
+          </div>
+          
+          <div className="flex gap-3">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={refreshData}
+              disabled={refreshing}
+              className="flex items-center gap-2 bg-white text-[var(--color-black)] px-4 py-3 rounded-xl border border-gray-200 hover:border-[var(--color-primary)] transition-all shadow-sm"
+            >
+              <FiRefreshCw className={`text-lg ${refreshing ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">Refresh</span>
+            </motion.button>
+            
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => navigate("/marketplace")}
+              className="flex items-center gap-2 bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary)]/90 text-white px-4 py-3 rounded-xl hover:from-[var(--color-secondary)] hover:to-[var(--color-secondary)]/90 transition-all shadow-lg"
+            >
+              <FiPlus className="text-lg" />
+              <span className="hidden sm:inline">Cari Barter</span>
+            </motion.button>
+          </div>
+        </div>
+
+        {/* Search Bar */}
+        <div className="relative max-w-md">
+          <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg" />
+          <input
+            type="text"
+            placeholder="Cari barter..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-3 bg-white/80 border border-gray-200 rounded-xl focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20 outline-none transition-all"
+          />
+        </div>
+      </motion.div>
+
+      {/* Tab Navigation */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="flex flex-wrap gap-3 mb-8"
+      >
+        {tabConfig.map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.key;
+          const count = getCount(tab.key);
+          
+          return (
+            <motion.button
+              key={tab.key}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setActiveTab(tab.key)}
+              className={`flex items-center justify-between w-full sm:w-auto px-4 py-4 rounded-2xl border-2 transition-all duration-300 group ${
+                isActive
+                  ? `bg-gradient-to-r ${tab.color} text-white shadow-lg border-transparent`
+                  : "bg-white/80 hover:bg-white text-gray-700 border-gray-200/60 hover:border-[var(--color-primary)]/30"
               }`}
             >
-              {getCount(tab.key)}
-            </span>
-          </button>
-        ))}
-      </div>
-      <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-xl ${
+                  isActive 
+                    ? "bg-white/20" 
+                    : "bg-gray-100 group-hover:bg-[var(--color-primary)]/10"
+                }`}>
+                  <Icon className={`text-lg ${
+                    isActive ? "text-white" : "text-gray-600 group-hover:text-[var(--color-primary)]"
+                  }`} />
+                </div>
+                <div className="text-left">
+                  <div className="font-semibold text-sm sm:text-base">{tab.label}</div>
+                  <div className={`text-xs ${
+                    isActive ? "text-white/80" : "text-gray-500"
+                  }`}>
+                    {tab.description}
+                  </div>
+                </div>
+              </div>
+              <span
+                className={`ml-3 px-2.5 py-1 rounded-full text-xs font-bold ${
+                  isActive
+                    ? "bg-white text-gray-800"
+                    : "bg-gray-200 text-gray-700 group-hover:bg-[var(--color-primary)] group-hover:text-white"
+                }`}
+              >
+                {count}
+              </span>
+            </motion.button>
+          );
+        })}
+      </motion.div>
+
+      {/* Content Grid */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.2 }}
+        className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
+      >
         {loading ? (
-          <p className="text-gray-500 text-center py-8 animate-pulse col-span-full">
-            Memuat data barter...
-          </p>
-        ) : filteredData.length > 0 ? (
-          filteredData.map((trade, index) => (
-            <CardTrade
+          // Loading Skeleton
+          Array.from({ length: 6 }).map((_, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: index * 0.1 }}
+              className="bg-white/50 rounded-2xl p-6 border border-gray-200/60 animate-pulse"
+            >
+              <div className="h-48 bg-gray-200 rounded-xl mb-4"></div>
+              <div className="h-4 bg-gray-200 rounded mb-2"></div>
+              <div className="h-3 bg-gray-200 rounded w-3/4"></div>
+            </motion.div>
+          ))
+        ) : searchedData.length > 0 ? (
+          searchedData.map((trade, index) => (
+            <motion.div
               key={trade.id || index}
-              item={trade}
-              user={user}
-              isOwner={activeTab === "baru" && trade.userId === user?.uid}
-              onEdit={() => {
-                setSelectedTask(trade);
-                setIsEditModalOpen(true);
-              }}
-              onDelete={async () => await handleDeleteTask(trade.id)}
-              onClick={() => handleCardClick(trade)}
-              onOpenDetail={() => handleOpenDetail(trade)}
-            />
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+            >
+              <CardTrade
+                item={trade}
+                user={user}
+                isOwner={activeTab === "baru" && trade.userId === user?.uid}
+                onEdit={() => {
+                  setSelectedTask(trade);
+                  setIsEditModalOpen(true);
+                }}
+                onDelete={async () => await handleDeleteTask(trade.id)}
+                onClick={() => handleCardClick(trade)}
+                onOpenDetail={() => handleOpenDetail(trade)}
+              />
+            </motion.div>
           ))
         ) : (
-          <p className="text-gray-500 text-center py-8 col-span-full">
-            Belum ada tawaran di kategori ini.
-          </p>
+          // Empty State
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="col-span-full text-center py-12"
+          >
+            <div className="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-3xl flex items-center justify-center mx-auto mb-4">
+              <FiPackage className="text-gray-400 text-3xl" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-600 mb-2">
+              {searchTerm ? "Tidak ada hasil pencarian" : "Belum ada tawaran"}
+            </h3>
+            <p className="text-gray-500 max-w-md mx-auto mb-6">
+              {searchTerm 
+                ? `Tidak ditemukan barter dengan kata kunci "${searchTerm}"`
+                : activeTab === "baru" 
+                  ? "Mulai buat tawaran barter pertama Anda!"
+                  : activeTab === "masuk"
+                    ? "Belum ada tawaran yang masuk untuk barter Anda"
+                    : "Belum ada tawaran barter yang Anda ambil"
+              }
+            </p>
+            {activeTab === "baru" && (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => navigate("/marketplace")}
+                className="bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary)]/90 text-white px-6 py-3 rounded-xl hover:from-[var(--color-secondary)] hover:to-[var(--color-secondary)]/90 transition-all shadow-lg"
+              >
+                Buat Tawaran Barter
+              </motion.button>
+            )}
+          </motion.div>
         )}
-      </div>
+      </motion.div>
+
+      {/* Modals */}
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} task={selectedTask} />
       <EditTradeModal
         isOpen={isEditModalOpen}

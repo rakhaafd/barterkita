@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiX, FiMapPin, FiSend, FiStar, FiMessageSquare } from "react-icons/fi";
+import { FiX, FiMapPin, FiSend, FiStar, FiMessageSquare, FiUser, FiCheckCircle, FiArrowRight } from "react-icons/fi";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "../firebase/firebase-config";
 import Button from "./Button";
 import { showSuccess, showError } from "./Alert";
+import { SkillLabel, StatusLabel } from "./Label";
 
 export default function Modal({ isOpen, onClose, task, onSendOffer, onAcceptOffer, offerId }) {
   const navigate = useNavigate();
@@ -42,11 +43,17 @@ export default function Modal({ isOpen, onClose, task, onSendOffer, onAcceptOffe
       await setDoc(chatRef, { createdAt: serverTimestamp(), agreements: {} }, { merge: true });
       console.log("Created new chat:", chatId);
 
-      showSuccess({ title: "Berhasil!", text: "Tawaran berhasil dikirim!" });
+      showSuccess({ 
+        title: "Tawaran Terkirim! 🎉", 
+        text: "Tawaran barter berhasil dikirim. Anda akan diarahkan ke chat." 
+      });
       navigate(`/chat/${task.id}/${task.userId}`);
     } catch (err) {
       console.error("Gagal mengirim tawaran:", err.message, err.code);
-      showError({ title: "Gagal!", text: "Gagal mengirim tawaran: " + err.message });
+      showError({ 
+        title: "Gagal Mengirim", 
+        text: "Terjadi kesalahan saat mengirim tawaran. Silakan coba lagi." 
+      });
     }
   };
 
@@ -59,12 +66,18 @@ export default function Modal({ isOpen, onClose, task, onSendOffer, onAcceptOffe
     }
     try {
       await onAcceptOffer(offerId, task.id);
-      showSuccess({ title: "Berhasil!", text: "Tawaran berhasil diterima!" });
+      showSuccess({ 
+        title: "Tawaran Diterima! ✅", 
+        text: "Tawaran berhasil diterima. Mulai kolaborasi sekarang!" 
+      });
       navigate(`/chat/${task.id}/${task.offererId}`);
       onClose();
     } catch (err) {
       console.error("Gagal menerima tawaran:", err.message, err.code);
-      showError({ title: "Gagal!", text: "Gagal menerima tawaran: " + err.message });
+      showError({ 
+        title: "Gagal Menerima", 
+        text: "Terjadi kesalahan saat menerima tawaran." 
+      });
     }
   };
 
@@ -78,83 +91,211 @@ export default function Modal({ isOpen, onClose, task, onSendOffer, onAcceptOffe
     <AnimatePresence>
       {isOpen && task && (
         <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          onClick={(e) => e.target === e.currentTarget && onClose()}
         >
           <motion.div
             initial={{ scale: 0.8, opacity: 0, y: 30 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.8, opacity: 0, y: 30 }}
-            transition={{ type: "spring", damping: 20, stiffness: 200 }}
-            className="relative bg-white/80 backdrop-blur-md border border-[var(--color-secondary)]/30 rounded-3xl shadow-2xl max-w-lg w-[90%] p-8 text-[var(--color-black)]"
+            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            className="relative bg-white/95 backdrop-blur-md border border-gray-200/80 rounded-3xl shadow-2xl max-w-md w-full p-6 text-[var(--color-black)]"
           >
-            <button
-              onClick={() => {
-                console.log("Close button clicked");
-                onClose();
-              }}
-              className="absolute top-4 right-4 text-[var(--color-primary)] hover:text-[var(--color-secondary)] transition text-2xl"
-            >
-              <FiX />
-            </button>
-            <h2 className="text-2xl font-bold text-[var(--color-primary)] mb-2 flex items-center gap-2">
-              <FiStar className="text-[var(--color-secondary)]" />
-              {task.title}
-            </h2>
-            <p className="text-gray-700 mb-4 leading-relaxed">{task.description}</p>
-            <div className="border-t border-gray-200 my-4"></div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-              <div className="bg-[var(--color-secondary)]/10 rounded-lg px-4 py-3">
-                <p className="font-semibold text-[var(--color-primary)] text-sm">
-                  Skill yang Dibutuhkan
-                </p>
-                <p className="text-[var(--color-black)]">{task.neededSkill}</p>
+            {/* Header */}
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-secondary)] p-2 rounded-xl">
+                  <FiStar className="text-white text-lg" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-[var(--color-black)]">
+                    {onAcceptOffer ? "Terima Tawaran" : "Kirim Tawaran"}
+                  </h2>
+                  <p className="text-sm text-gray-600">
+                    {onAcceptOffer ? "Konfirmasi penerimaan tawaran" : "Ajukan tawaran barter Anda"}
+                  </p>
+                </div>
               </div>
-              <div className="bg-[var(--color-primary)]/10 rounded-lg px-4 py-3">
-                <p className="font-semibold text-[var(--color-primary)] text-sm">
-                  Skill yang Ditawarkan
-                </p>
-                <p className="text-[var(--color-black)]">{task.offeredSkill}</p>
+              <motion.button
+                whileHover={{ scale: 1.1, rotate: 90 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={onClose}
+                className="p-2 text-gray-400 hover:text-[var(--color-primary)] transition-colors"
+              >
+                <FiX className="text-xl" />
+              </motion.button>
+            </div>
+
+            {/* Task Preview */}
+            <div className="bg-gradient-to-br from-gray-50 to-gray-100/80 rounded-2xl p-5 mb-6 border border-gray-200/60">
+              {/* Task Header */}
+              <div className="flex items-start justify-between mb-4">
+                <h3 className="text-lg font-bold text-[var(--color-black)] leading-tight">
+                  {task.title}
+                </h3>
+                <StatusLabel status={task.status} />
               </div>
-              <div className="col-span-2 flex items-center mt-2 text-[var(--color-black)] gap-2 text-sm">
-                <FiMapPin className="text-[var(--color-primary)]" />
-                <span>{task.location}</span>
+
+              {/* Description */}
+              <p className="text-gray-700 text-sm leading-relaxed mb-4">
+                {task.description}
+              </p>
+
+              {/* Skills */}
+              <div className="flex flex-wrap gap-2 mb-4">
+                <SkillLabel type="needed">
+                  Butuh: {task.requiredSkill || task.neededSkill}
+                </SkillLabel>
+                <SkillLabel type="offered">
+                  Tawaran: {task.offeredSkill}
+                </SkillLabel>
+              </div>
+
+              {/* Location & Creator */}
+              <div className="flex items-center justify-between text-xs text-gray-600">
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 bg-white/80 px-2 py-1 rounded-lg">
+                    <FiMapPin className="text-[var(--color-primary)]" size={12} />
+                    <span>{task.location}</span>
+                  </div>
+                  <div className="flex items-center gap-1 bg-white/80 px-2 py-1 rounded-lg">
+                    <FiUser className="text-[var(--color-secondary)]" size={12} />
+                    <span>{task.createdBy}</span>
+                  </div>
+                </div>
               </div>
             </div>
-            <div className="mt-8 flex justify-center gap-4">
+
+            {/* Action Info */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="bg-gradient-to-r from-[var(--color-primary)]/5 to-[var(--color-secondary)]/5 rounded-2xl p-4 mb-6 border border-[var(--color-primary)]/20"
+            >
+              <div className="flex items-center gap-3">
+                <div className="bg-[var(--color-primary)] text-white p-2 rounded-lg">
+                  <FiCheckCircle className="text-lg" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-[var(--color-primary)]">
+                    {onAcceptOffer ? "Siap Kolaborasi?" : "Siap Bertukar Skill?"}
+                  </p>
+                  <p className="text-xs text-gray-600">
+                    {onAcceptOffer 
+                      ? "Terima tawaran untuk memulai kolaborasi barter" 
+                      : "Kirim tawaran untuk memulai percakapan barter"
+                    }
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col gap-3">
               {onAcceptOffer && offerId ? (
                 <>
-                  <Button
-                    onClick={handleAcceptOffer}
-                    variant="primary"
+                  <motion.div
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                   >
-                    Terima Tawaran
-                  </Button>
-                  <Button
-                    onClick={handleOpenChat}
-                    variant="outline"
+                    <Button
+                      onClick={handleAcceptOffer}
+                      variant="primary"
+                      className="w-full py-4 text-base font-semibold flex items-center justify-center gap-2"
+                    >
+                      <FiCheckCircle className="text-lg" />
+                      Terima & Mulai Kolaborasi
+                      <FiArrowRight className="group-hover:translate-x-1 transition-transform" />
+                    </Button>
+                  </motion.div>
+                  <motion.div
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                   >
-                    <FiMessageSquare className="inline text-lg mr-1" /> Buka Chat
-                  </Button>
+                    <Button
+                      onClick={handleOpenChat}
+                      variant="outline"
+                      className="w-full py-3 text-sm font-medium border-2 flex items-center justify-center gap-2"
+                    >
+                      <FiMessageSquare className="text-lg" />
+                      Lihat Chat Dulu
+                    </Button>
+                  </motion.div>
                 </>
               ) : task.status === "proses" ? (
-                <Button
-                  onClick={handleOpenChat}
-                  variant="primary"
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                 >
-                  <FiMessageSquare className="inline text-lg mr-1" /> Buka Chat
-                </Button>
+                  <Button
+                    onClick={handleOpenChat}
+                    variant="primary"
+                    className="w-full py-4 text-base font-semibold flex items-center justify-center gap-2"
+                  >
+                    <FiMessageSquare className="text-lg" />
+                    Buka Chat Barter
+                    <FiArrowRight className="group-hover:translate-x-1 transition-transform" />
+                  </Button>
+                </motion.div>
               ) : (
-                <Button
-                  onClick={handleSendOffer}
-                  variant="primary"
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                 >
-                  <FiSend className="inline text-lg mr-1" /> Kirim Tawaran Barter
-                </Button>
+                  <Button
+                    onClick={handleSendOffer}
+                    variant="primary"
+                    className="w-full py-4 text-base font-semibold bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary)]/90 hover:from-[var(--color-secondary)] hover:to-[var(--color-secondary)]/90 flex items-center justify-center gap-2"
+                    disabled={!currentUser}
+                  >
+                    {currentUser ? (
+                      <>
+                        <FiSend className="text-lg" />
+                        Kirim Tawaran Barter
+                        <FiArrowRight className="group-hover:translate-x-1 transition-transform" />
+                      </>
+                    ) : (
+                      <span className="flex items-center justify-center gap-2">
+                        <FiSend className="text-lg" />
+                        Login untuk Mengirim Tawaran
+                      </span>
+                    )}
+                  </Button>
+                </motion.div>
+              )}
+
+              {/* Login Prompt */}
+              {!currentUser && !onAcceptOffer && task.status !== "proses" && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  className="text-center"
+                >
+                  <p className="text-xs text-gray-500 mt-2">
+                    🔒 Anda perlu login terlebih dahulu untuk mengirim tawaran
+                  </p>
+                </motion.div>
               )}
             </div>
+
+            {/* Additional Info */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className="mt-4 text-center"
+            >
+              <p className="text-xs text-gray-500">
+                {onAcceptOffer 
+                  ? "Dengan menerima, Anda setuju untuk memulai kolaborasi barter" 
+                  : "Tawaran akan dikirim dan chat otomatis dibuat"
+                }
+              </p>
+            </motion.div>
           </motion.div>
         </motion.div>
       )}

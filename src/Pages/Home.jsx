@@ -26,6 +26,7 @@ import Card from "../Elements/Card.jsx";
 import Navbar from "../Layouts/Navbar.jsx";
 import Footer from "../Layouts/Footer.jsx";
 import DemoPemakaian from "../assets/penggunaan.mp4";
+import { useNavigate } from "react-router-dom";
 
 const Home = () => {
   const [counts, setCounts] = useState({ instansi: 0, keahlian: 0, tawaran: 0 });
@@ -42,6 +43,24 @@ const Home = () => {
 
   const toggleFAQ = (index) => {
     setActiveIndex(activeIndex === index ? null : index);
+  };
+
+const navigate = useNavigate()
+
+// Fungsi untuk scroll ke section tertentu
+  const scrollToSection = (sectionId) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  // Fungsi untuk redirect ke WhatsApp
+  const redirectToWhatsApp = () => {
+    const message = "Halo Tim BarterKita 👋,\n\nSaya memiliki pertanyaan terkait:\n\n[Silakan tulis pertanyaan Anda di sini]\n\nTerima kasih 🙏";
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://wa.me/62895339023888?text=${encodedMessage}`;
+    window.open(whatsappUrl, '_blank');
   };
 
   const steps = [
@@ -251,13 +270,13 @@ const Home = () => {
             transition={{ duration: 0.8, delay: 0.6 }}
             className="flex flex-col sm:flex-row gap-4 justify-center items-center"
           >
-            <Button className="group">
+            <Button className="group" onClick={() => navigate("/marketplace")}>
               <span className="flex items-center gap-2">
                 Mulai Barter Sekarang
                 <FiArrowRight className="group-hover:translate-x-1 transition-transform" />
               </span>
             </Button>
-            <Button variant="outline" className="border-white text-white hover:bg-white hover:text-[var(--color-primary)]">
+            <Button variant="outline" className="border-white text-white hover:bg-white hover:text-[var(--color-primary)]" onClick={() => scrollToSection("FAQ")}>
               Pelajari Lebih Lanjut
             </Button>
           </motion.div>
@@ -838,8 +857,7 @@ const Home = () => {
                 </p>
                 <Button
                   variant="secondary"
-                  href="https://wa.me/62895339023888?text=Halo%20Tim%20BarterKita%F0%9F%91%8B%2C%0A%0ASaya%20memiliki%20pertanyaan%20terkait%3A%0A%0A(pesanmu)%0A%0ATerima%20kasih%20%F0%9F%99%8F."
-                  target="_blank"
+                  onClick={redirectToWhatsApp}
                   className="w-full bg-white text-[var(--color-primary)] hover:bg-gray-100"
                 >
                   Hubungi Kami
